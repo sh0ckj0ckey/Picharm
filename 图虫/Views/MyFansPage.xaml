@@ -1,0 +1,87 @@
+﻿<Page
+    x:Class="图虫.Views.MyFansPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:图虫.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:model="using:图虫.Models.MyFans"
+    mc:Ignorable="d" RequestedTheme="Light"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Page.Transitions>
+        <TransitionCollection>
+            <NavigationThemeTransition/>
+        </TransitionCollection>
+    </Page.Transitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="128"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0">
+            <AppBarButton Height="36" Width="36" Background="#8CF3F4F8" CornerRadius="36" Margin="8,0,12,0" VerticalAlignment="Center" Click="AppBarButton_Click">
+                <AppBarButton.Content>
+                    <TextBlock Text="&#xE0A6;" FontFamily="Segoe MDL2 Assets" FontWeight="Bold" Margin="0,-2,0,2" VerticalAlignment="Center"/>
+                </AppBarButton.Content>
+            </AppBarButton>
+            <controls:DropShadowPanel ShadowOpacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Ellipse Height="42" Width="42" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse.Fill>
+                        <ImageBrush x:Name="UserPhotoImageBrush" ImageSource="{x:Bind ViewModel.Avatar,Mode=OneWay}" Stretch="UniformToFill"/>
+                    </Ellipse.Fill>
+                </Ellipse>
+            </controls:DropShadowPanel>
+            <TextBlock VerticalAlignment="Center" Text="我的粉丝" FontSize="32" FontWeight="Bold" CharacterSpacing="96" Margin="16,0"/>
+        </StackPanel>
+        <ScrollViewer x:Name="MyFansScrollViewer" Grid.Row="1" Visibility="Visible">
+            <StackPanel Orientation="Vertical">
+                <ListView x:Name="FollowListView" Margin="16,0,16,12" ItemsSource="{x:Bind ViewModel.FansList}" 
+                      IsItemClickEnabled="False" SelectionMode="None" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch">
+                    <ListView.Template>
+                        <ControlTemplate>
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </ListView.Template>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="model:Site">
+                            <Grid Height="76" CornerRadius="4" Background="#CCF4F5F8" Margin="4" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Height="48" Width="48" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                     Margin="12,0,16,0" StrokeThickness="0">
+                                    <Ellipse.Fill>
+                                        <ImageBrush>
+                                            <ImageBrush.ImageSource>
+                                                <BitmapImage UriSource="{x:Bind icon}" DecodePixelType="Logical" DecodePixelHeight="64" DecodePixelWidth="64"/>
+                                            </ImageBrush.ImageSource>
+                                        </ImageBrush>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+                                <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Left" MaxHeight="68">
+                                    <TextBlock Text="{x:Bind name}" TextTrimming="CharacterEllipsis" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,2"/>
+                                    <TextBlock Text="{x:Bind intro}" FontSize="12" Foreground="#666666" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                </StackPanel>
+                                <AppBarButton Grid.ColumnSpan="2" Height="76" Width="auto" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Click="AppBarButton_Click_1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button x:Name="LoadMoreButton" Content="加载更多" Visibility="{x:Bind ViewModel.HasMore,Mode=OneWay}" Click="LoadMoreButton_Click" FontSize="16" Margin="0,16,0,32" HorizontalAlignment="Center" FontWeight="Bold" Style="{StaticResource TextBlockButtonStyle}"/>
+                <Image x:Name="EndImage" Visibility="{x:Bind ViewModel.End,Mode=OneWay}" Source="/Assets/Icons/end.png" Height="48" Margin="0,16,0,32"/>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel x:Name="FailedStackPanel" Visibility="Collapsed" Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Image Source="/Assets/Icons/failed.png" Height="100" Width="100"/>
+            <TextBlock Text="获取数据失败" HorizontalAlignment="Center" FontSize="18" Foreground="#888888" Opacity="0.7" Margin="0,12,0,0"/>
+        </StackPanel>
+    </Grid>
+</Page>
