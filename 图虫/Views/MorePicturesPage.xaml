@@ -168,7 +168,7 @@
         </Grid>
         <Grid Grid.Row="0">
             <Grid.Background>
-                <AcrylicBrush TintOpacity="0.7" BackgroundSource="Backdrop" FallbackColor="White"/>
+                <AcrylicBrush TintOpacity="0.2" BackgroundSource="Backdrop"/>
             </Grid.Background>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -188,7 +188,7 @@
                     <ImageBrush ImageSource="{x:Bind oneFeed.UserPhotoUrl}" Stretch="UniformToFill"/>
                 </Ellipse.Fill>
             </Ellipse>
-            <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,8">
+            <Grid Grid.Column="2" VerticalAlignment="Center" Margin="8,8,0,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto" MinHeight="24"/>
                     <RowDefinition Height="*"/>

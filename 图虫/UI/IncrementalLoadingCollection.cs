@@ -52,6 +52,8 @@ namespace 图虫
                 if (this.feedPageIndex == 1)
                 {
                     gottenFeeds = await ApiHelper.GetFeed("page=1&type=refresh");
+                    Loading = Visibility.Collapsed;
+                    isLoading = false;
                     if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败"))
                     {
                         this.feedPageIndex = 1;
@@ -92,8 +94,6 @@ namespace 图虫
                                 }
                             }
                             this.feedPageIndex += 1;
-                            Loading = Visibility.Collapsed;
-                            isLoading = false;
                         }
                     }
                 }
@@ -106,7 +106,7 @@ namespace 图虫
                     }
                     else
                     {
-                        gottenFeeds = await ApiHelper.GetFeed("page=" + this.feedPageIndex + "post_id=" + this.feedPageLastImgID + "&type=loadmore");
+                        gottenFeeds = await ApiHelper.GetFeed("page=" + this.feedPageIndex + "&post_id=" + this.feedPageLastImgID + "&type=loadmore");
                         if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败"))
                         {
                             if (gottenFeeds != null)
