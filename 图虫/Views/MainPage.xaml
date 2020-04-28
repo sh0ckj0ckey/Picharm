@@ -63,7 +63,7 @@
         </Grid.ColumnDefinitions>
         <Grid Grid.Column="0">
             <Grid.Background>
-                <AcrylicBrush x:Name="MainPageAcrylicBrush" BackgroundSource="HostBackdrop" TintOpacity="0.8" AlwaysUseFallback="True"/>
+                <AcrylicBrush x:Name="MainPageAcrylicBrush" BackgroundSource="HostBackdrop" TintOpacity="0.9" AlwaysUseFallback="True"/>
             </Grid.Background>
             <Grid.RowDefinitions>
                 <RowDefinition Height="42"/>
@@ -135,7 +135,7 @@
                                   ItemsSource="{x:Bind FeedsObservableCollection,Mode=OneWay}" DataFetchSize="1" IncrementalLoadingThreshold="0" IncrementalLoadingTrigger="Edge">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="local:FeedViewModel">
-                                    <Grid Height="auto" Width="420" Margin="2,4,-12,4" Background="#12B0B0B0">
+                                    <Grid Height="auto" Width="420" Margin="2,4,-12,4" Background="#88F4F5F8">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="4"/>
                                             <RowDefinition Height="56"/>
@@ -399,7 +399,7 @@
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="关于此应用" FontWeight="Bold" Margin="0,8,0,0"/>
                                 <Image Height="18" HorizontalAlignment="Left" Margin="4,8" Source="/Assets/Pictures/logo.png"/>
-                                <TextBlock Text="v 2.2.2β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
+                                <TextBlock Text="v 2.2.3β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
                                 <TextBlock FontSize="12" Text="2016-2020 NoMewing." Margin="4,4,0,0" Opacity="0.5"/>
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="反馈" FontWeight="Bold" Margin="0,8,0,0"/>

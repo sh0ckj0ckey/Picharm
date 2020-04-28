@@ -81,7 +81,7 @@ namespace BackgroundTasks
                         // 如果没有获取到一个post类型，就继续请求新数据，直到找到一个数据
                         while (temp.Count == 0)
                         {
-                            response = await http.GetAsync(new Uri("https://api.tuchong.com/2/feed-app?" + "page=" + index + "post_id=" + lastpost + "&type=loadmore"));
+                            response = await http.GetAsync(new Uri("https://api.tuchong.com/2/feed-app?" + "page=" + index + "&post_id=" + lastpost + "&type=loadmore"));
                             index++;
                             jsonMessage = await response.Content.ReadAsStringAsync();
                             feed = JsonConvert.DeserializeObject<Feeds>(jsonMessage, jss);
