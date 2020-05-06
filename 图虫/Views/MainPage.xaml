@@ -399,7 +399,7 @@
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="关于此应用" FontWeight="Bold" Margin="0,8,0,0"/>
                                 <Image Height="18" HorizontalAlignment="Left" Margin="4,8" Source="/Assets/Pictures/logo.png"/>
-                                <TextBlock Text="v 2.2.3β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
+                                <TextBlock Text="v 2.2.4β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
                                 <TextBlock FontSize="12" Text="2016-2020 NoMewing." Margin="4,4,0,0" Opacity="0.5"/>
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="反馈" FontWeight="Bold" Margin="0,8,0,0"/>
