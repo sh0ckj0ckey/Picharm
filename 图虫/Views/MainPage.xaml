@@ -109,15 +109,15 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="作品详情页添加作品介绍" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="作品详情页添加作品介绍；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="设置弹窗添加了清理缓存的按钮" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="设置弹窗添加了清理缓存的按钮；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="修改了图片缓存加载机制，同时所有图片列表换为竖直瀑布流" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="修改了图片缓存加载机制，同时所有图片列表换为竖直瀑布流；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
