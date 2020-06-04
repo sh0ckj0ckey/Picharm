@@ -615,13 +615,14 @@
                 <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}"/>
                 <Setter Property="FontWeight" Value="Normal"/>
                 <Setter Property="Width" Value="68"/>
+                <Setter Property="CornerRadius" Value="36"/>
                 <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}"/>
                 <Setter Property="AllowFocusOnInteraction" Value="False"/>
                 <Setter Property="KeyboardAcceleratorPlacementMode" Value="Hidden"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="AppBarButton">
-                            <Grid x:Name="Root" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="36" MinWidth="{TemplateBinding MinWidth}" MaxWidth="{TemplateBinding MaxWidth}">
+                            <Grid x:Name="Root" Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="{TemplateBinding CornerRadius}" MinWidth="{TemplateBinding MinWidth}" MaxWidth="{TemplateBinding MaxWidth}">
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="ApplicationViewStates">
                                         <VisualState x:Name="FullSize"/>

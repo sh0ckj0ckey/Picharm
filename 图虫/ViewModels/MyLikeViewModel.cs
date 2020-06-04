@@ -41,6 +41,13 @@ namespace 图虫.ViewModels
             get => _likeList;
             set => Set(ref _likeList, value);
         }
+
+        public void ResetData()
+        {
+            LikeList.Clear();
+            HasMore = Visibility.Visible;
+            End = Visibility.Collapsed;
+        }
     }
 
 }

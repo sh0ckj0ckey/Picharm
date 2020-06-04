@@ -22,20 +22,24 @@ namespace BackgroundTasks
     {
         public async void Run(IBackgroundTaskInstance taskInstance)
         {
-            // Get a deferral, to prevent the task from closing prematurely
-            // while asynchronous code is still running.
-            BackgroundTaskDeferral deferral = taskInstance.GetDeferral();
-
-            var feed = await GetFeed();
-
-            // Update the live tile with the feed items.
-            if (feed != null)
+            try
             {
-                UpdateTile(feed);
-            }
+                // Get a deferral, to prevent the task from closing prematurely
+                // while asynchronous code is still running.
+                BackgroundTaskDeferral deferral = taskInstance.GetDeferral();
 
-            // Inform the system that the task is finished.
-            deferral.Complete();
+                var feed = await GetFeed();
+
+                // Update the live tile with the feed items.
+                if (feed != null)
+                {
+                    UpdateTile(feed);
+                }
+
+                // Inform the system that the task is finished.
+                deferral.Complete();
+            }
+            catch { }
         }
 
         private static async Task<FeedVM> GetFeed()
@@ -124,6 +128,7 @@ namespace BackgroundTasks
                         TileMedium = new TileBinding()
                         {
                             Branding = TileBranding.Name,
+                            DisplayName = feed.Name,
                             Content = new TileBindingContentAdaptive()
                             {
                                 PeekImage = new TilePeekImage()
@@ -149,6 +154,8 @@ namespace BackgroundTasks
                         },
                         TileWide = new TileBinding()
                         {
+                            Branding = TileBranding.NameAndLogo,
+                            DisplayName = feed.Name,
                             Content = new TileBindingContentAdaptive()
                             {
                                 PeekImage = new TilePeekImage()
@@ -161,15 +168,15 @@ namespace BackgroundTasks
                                 {
                                     new AdaptiveText()
                                     {
-                                        Text = feed.Name,
-                                        HintStyle = AdaptiveTextStyle.Base
-                                    },
-                                    new AdaptiveText()
-                                    {
                                         Text = feed.Desc,
                                         HintStyle = AdaptiveTextStyle.Body,
                                         HintWrap=true,
                                         HintMaxLines=2
+                                    },
+                                    new AdaptiveText()
+                                    {
+                                        Text = feed.LikesCount,
+                                        HintStyle = AdaptiveTextStyle.Caption
                                     },
                                     new AdaptiveText()
                                     {
@@ -182,6 +189,8 @@ namespace BackgroundTasks
                         },
                         TileLarge = new TileBinding()
                         {
+                            Branding = TileBranding.NameAndLogo,
+                            DisplayName = feed.Name,
                             Content = new TileBindingContentAdaptive()
                             {
                                 PeekImage = new TilePeekImage()
@@ -194,15 +203,15 @@ namespace BackgroundTasks
                                 {
                                     new AdaptiveText()
                                     {
-                                        Text =feed.Name,
-                                        HintStyle=AdaptiveTextStyle.Base
-                                    },
-                                    new AdaptiveText()
-                                    {
                                         Text =feed.Desc,
                                         HintStyle=AdaptiveTextStyle.Body,
                                         HintWrap=true,
                                         HintMaxLines=4
+                                    },
+                                    new AdaptiveText()
+                                    {
+                                        Text =feed.LikesCount,
+                                        HintStyle=AdaptiveTextStyle.Caption
                                     },
                                     new AdaptiveText()
                                     {
@@ -803,6 +812,7 @@ namespace BackgroundTasks
             public string Date { get; set; }
             public string Cover { get; set; }
             public string Desc { get; set; }
+            public string LikesCount { get; set; }
 
             public FeedVM(Feedlist feedlist)
             {
@@ -812,9 +822,21 @@ namespace BackgroundTasks
                 string desc = feedlist.entry.content.Replace("<br />", "");
                 if (desc.Length <= 0)
                 {
+                    desc = feedlist.entry.excerpt.Replace("<br />", "");
+                }
+                if (desc.Length <= 0)
+                {
                     desc = "作者未添加描述";
                 }
                 this.Desc = desc;
+                try
+                {
+                    this.LikesCount = "有" + feedlist.entry.favorites + "人喜欢";
+                }
+                catch
+                {
+                    this.LikesCount = "有0人喜欢";
+                }
             }
         }
     }

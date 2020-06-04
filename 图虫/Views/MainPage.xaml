@@ -7,11 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls" 
     xmlns:viewmodels="using:图虫.ViewModels"
-    xmlns:local1="using:图虫.Models.Discover"
+    xmlns:local1="using:图虫.Models.Discover" 
+    xmlns:convert="using:图虫.Converters"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     RequestedTheme="Light">
     <Page.Resources>
+        <convert:BoolToVisibility x:Key="vtBool2Visibility"/>
+
         <Style x:Key="BaseTextBlockStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="XamlAutoFontFamily"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -47,12 +50,8 @@
             </DoubleAnimation>
         </Storyboard>
         <Storyboard x:Name="IKnowTheUpdate">
-            <!--<DoubleAnimation To="0" Duration="00:00:0.7"
-                             Storyboard.TargetName="UpdatelogStackPanel"
-                             Storyboard.TargetProperty="Height"
-                             Completed="DoubleAnimation_Completed_3">
-            </DoubleAnimation>-->
-            <DoubleAnimation Duration="0:0:0.2" From="1" To="0" Storyboard.TargetProperty="ScaleX" Storyboard.TargetName="ScaleStackPanel" Completed="DoubleAnimation_Completed_3"/>
+            <DoubleAnimation Duration="0:0:0.2" From="1" To="0" Storyboard.TargetProperty="ScaleY" 
+                             Storyboard.TargetName="ScaleStackPanel" Completed="DoubleAnimation_Completed_3"/>
         </Storyboard>
     </Page.Resources>
 
@@ -88,42 +87,41 @@
                 </Pivot.HeaderTemplate>
                 <PivotItem Header="推荐">
                     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="21*"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition  Height="auto"/>
+                            <RowDefinition Height="auto"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <StackPanel x:Name="UpdatelogStackPanel" Grid.Row="0" Visibility="Visible" Background="{ThemeResource SystemControlBackgroundAccentBrush}" Margin="-4,4" CornerRadius="4" Height="auto" Padding="8">
+                        <StackPanel x:Name="UpdatelogStackPanel" Grid.Row="0" Visibility="Visible" Background="{ThemeResource SystemControlBackgroundAccentBrush}" Margin="-4,4,-4,4" CornerRadius="4" Height="auto" Padding="8" Grid.ColumnSpan="2">
                             <StackPanel.RenderTransform>
-                                <ScaleTransform x:Name="ScaleStackPanel" ScaleX="1.0" CenterX="0"/>
+                                <ScaleTransform x:Name="ScaleStackPanel" ScaleY="1.0" CenterY="0"/>
                             </StackPanel.RenderTransform>
-                            <TextBlock Grid.Row="0" Margin="18,0" VerticalAlignment="Bottom" Foreground="White" FontWeight="Bold" FontSize="16" Text="更新日志"/>
-                            <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
-                                <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="添加了关注功能，快去作品页或者摄影师主页关注TA吧；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                            <StackPanel Grid.Row="0" Margin="18,0" Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Bottom" Foreground="White" FontWeight="Bold" FontSize="16" Text="更新日志"/>
+                                <TextBlock VerticalAlignment="Bottom" Margin="8,0" Opacity="0.7" Foreground="White" FontSize="12" Text="2020.5.18"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="添加了个人中心页面，快去右边查看您的作品、点赞和关注吧；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="推荐列表添加关注按钮；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="与此同时，搜索框搬家啦，劳烦抬眼向上看👆" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="作品详情页添加作品介绍" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="优化了图片查看器的一丝体验，新增了在图片未放大时鼠标滚轮翻页的支持；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="设置弹窗添加了清理缓存的按钮" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="使用了新的&quot;推荐&quot;页面的 API，如果出现问题可以尝试登录后再看；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="修改了图片缓存加载机制，同时所有图片列表换为竖直瀑布流" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
                                 <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="优化了部分代码，我以后会舒服点；" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Opacity="0.9" Margin="0,8,0,0">
-                                <TextBlock Text="●" Foreground="White" Margin="12,0,8,0"/>
-                                <TextBlock Text="修复了几个小 bug，根据守恒定律，可能别处产生了新的 bug，如果遇到烦请反馈，感谢！" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
+                                <TextBlock Text="性能优化和Bug修复" CharacterSpacing="48" Foreground="White" Width="360" FontSize="14" TextWrapping="Wrap"/>
                             </StackPanel>
                             <Button Margin="0,8,12,4" CornerRadius="4" HorizontalAlignment="Right" Click="Button_Click_3">
                                 <Button.Content>
@@ -131,8 +129,8 @@
                                 </Button.Content>
                             </Button>
                         </StackPanel>
-                        <ListView x:Name="FeedListView" Grid.Row="1" Margin="-27,0,-12,0" SelectionMode="None" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollMode="Enabled"
-                                  ItemsSource="{x:Bind FeedsObservableCollection,Mode=OneWay}" DataFetchSize="1" IncrementalLoadingThreshold="0" IncrementalLoadingTrigger="Edge">
+                        <ListView x:Name="FeedListView" Grid.Row="1" Margin="-27,0,-12,0" SelectionMode="None" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Visible" ScrollViewer.VerticalScrollMode="Enabled"
+                                  ItemsSource="{x:Bind FeedsObservableCollection,Mode=OneWay}" DataFetchSize="1" IncrementalLoadingThreshold="0" IncrementalLoadingTrigger="Edge" Grid.ColumnSpan="2">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="local:FeedViewModel">
                                     <Grid Height="auto" Width="420" Margin="2,4,-12,4" Background="#88F4F5F8">
@@ -166,14 +164,17 @@
                                                     </StackPanel>
                                                 </Button.Content>
                                             </Button>
+                                            <Button Grid.Column="3" Visibility="{x:Bind isFollowing,Converter={StaticResource vtBool2Visibility},ConverterParameter=-,Mode=OneWay}" HorizontalAlignment="Right" Margin="0,0,12,0"
+                                                    Foreground="#FB3D65" FontSize="13" FontWeight="Black" Content="关注"
+                                                    Style="{StaticResource TextBlockButtonStyle}" Click="Button_Click_7"/>
+                                            <Button Grid.Column="3" Visibility="{x:Bind isFollowing,Converter={StaticResource vtBool2Visibility},Mode=OneWay}" HorizontalAlignment="Right" Margin="0,0,12,0"
+                                                    Foreground="#888888" FontSize="13" FontWeight="Black" Content="已关注"
+                                                    Style="{StaticResource TextBlockButtonStyle}" Click="Button_Click_8"/>
                                         </Grid>
                                         <Grid Grid.Row="2" MinHeight="96">
                                             <TextBlock Text="加载中..." HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16" Opacity="0.7"/>
-                                            <controls:ImageEx Height="auto" Width="408" IsCacheEnabled="True" CornerRadius="2" Background="#8C222222" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                <controls:ImageEx.Source>
-                                                    <BitmapImage UriSource="{x:Bind FirstPicUrl}" DecodePixelType="Logical" DecodePixelWidth="412"/>
-                                                </controls:ImageEx.Source>
-                                            </controls:ImageEx>
+                                            <Image Height="auto" Width="408" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None" Source="/Assets/Icons/placeholder.png"/>
+                                            <Image Height="auto" Width="408" HorizontalAlignment="Center" VerticalAlignment="Center" Source="{x:Bind FirstPic}"/>
                                             <AppBarButton Width="408" HorizontalAlignment="Center" VerticalContentAlignment="Stretch" VerticalAlignment="Stretch" ToolTipService.ToolTip="查看图片" Click="Button_Click_1"/>
                                         </Grid>
                                         <Button Grid.Row="3" Visibility="{x:Bind MultiPics}" Style="{StaticResource TextBlockButtonStyle}" HorizontalAlignment="Center" VerticalAlignment="Top" Click="Button_Click_6">
@@ -187,7 +188,7 @@
                                             </Button.Content>
                                         </Button>
                                         <StackPanel Grid.Row="4" Orientation="Horizontal" VerticalAlignment="Top" Margin="6,4">
-                                            <AppBarButton x:Name="LikeAppBarButton" Height="42" Width="108" IsEnabled="True" Click="LikeAppBarButton_Click">
+                                            <AppBarButton x:Name="LikeAppBarButton" Height="38" Width="96" CornerRadius="2" IsEnabled="True" Click="LikeAppBarButton_Click">
                                                 <AppBarButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Grid>
@@ -199,7 +200,7 @@
                                                     </StackPanel>
                                                 </AppBarButton.Content>
                                             </AppBarButton>
-                                            <AppBarButton x:Name="CommentAppBarButton" Height="42" Width="108" Margin="4,0" IsEnabled="True" Click="CommentAppBarButton_Click">
+                                            <AppBarButton x:Name="CommentAppBarButton" Height="38" Width="96" CornerRadius="2" Margin="4,0" IsEnabled="True" Click="CommentAppBarButton_Click">
                                                 <AppBarButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Image Source="/Assets/Icons/review.png" Height="20" VerticalAlignment="Center"/>
@@ -208,7 +209,7 @@
                                                     </StackPanel>
                                                 </AppBarButton.Content>
                                             </AppBarButton>
-                                            <AppBarButton x:Name="ShareAppBarButton" Height="42" Width="108" IsEnabled="True" Click="ShareAppBarButton_Click">
+                                            <AppBarButton x:Name="ShareAppBarButton" Height="38" Width="96" CornerRadius="2" IsEnabled="True" Click="ShareAppBarButton_Click">
                                                 <AppBarButton.Content>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Image Source="/Assets/Icons/share.png" Height="20" VerticalAlignment="Center"/>
@@ -224,7 +225,7 @@
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
-                        <Grid Grid.Row="1" x:Name="LoadingGrid" Visibility="{x:Bind FeedsObservableCollection.Loading,Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid Grid.Row="1" x:Name="LoadingGrid" Visibility="{x:Bind FeedsObservableCollection.Loading,Mode=OneWay}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="170,0,0,0">
                             <ProgressRing x:Name="LoadingProgressRing" IsActive="{x:Bind FeedsObservableCollection.isLoading,Mode=OneWay}" Height="56" Width="56" HorizontalAlignment="Center"/>
                         </Grid>
                     </Grid>
@@ -236,7 +237,7 @@
                             <RowDefinition Height="auto"/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <GridView x:Name="CategoryGridView" Grid.Row="0" ItemsSource="{x:Bind TagsObservableCollection}" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled" SelectionMode="Single" SelectionChanged="CategoryGridView_SelectionChanged">
+                        <GridView x:Name="CategoryGridView" Grid.Row="0" SelectedIndex="-1" ItemsSource="{x:Bind TagsObservableCollection}" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled" SelectionMode="Single" SelectionChanged="CategoryGridView_SelectionChanged">
                             <GridView.ItemTemplate>
                                 <DataTemplate x:DataType="local1:Category">
                                     <Grid Height="42" MinWidth="56" Background="#11808080">
@@ -245,16 +246,14 @@
                                 </DataTemplate>
                             </GridView.ItemTemplate>
                         </GridView>
-                        <StackPanel x:Name="CategoryLoadingStackPanel" Visibility="Visible" Grid.Row="1" Height="96" Orientation="Horizontal" HorizontalAlignment="Center">
-                            <ProgressRing x:Name="CategoryLoadingProgressRing" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="True"/>
-                            <TextBlock Text="正在加载..." FontSize="16" FontWeight="Light" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                        </StackPanel>
+                        <ProgressBar x:Name="CategoryLoadingProgressRing" Grid.Row="1" Margin="0,-6,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Center" IsIndeterminate="True" Background="Transparent"/>
                         <ScrollViewer Grid.Row="2" Margin="-12,0">
                             <StackPanel>
-                                <ListView x:Name="CategoryItemsListView" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" ItemsSource="{x:Bind CategoryItemsObservableCollection}" SelectionChanged="CategoryItemsListView_SelectionChanged">
+                                <ListView x:Name="CategoryItemsListView" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
+                                          ItemsSource="{x:Bind CategoryItemsObservableCollection}" IsItemClickEnabled="False" SelectionMode="None">
                                     <ListView.Template>
                                         <ControlTemplate>
-                                            <ItemsPresenter />
+                                            <ItemsPresenter/>
                                         </ControlTemplate>
                                     </ListView.Template>
                                     <ListView.ItemsPanel>
@@ -272,20 +271,16 @@
                                                     <RowDefinition Height="auto"/>
                                                     <RowDefinition Height="8"/>
                                                 </Grid.RowDefinitions>
-                                                <controls:DropShadowPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" ShadowOpacity="0.7">
-                                                    <Grid MinHeight="96" Background="#F4F5F8">
-                                                        <TextBlock Text="加载中..." HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16" Opacity="0.7"/>
-                                                        <Image HorizontalAlignment="Center" VerticalAlignment="Center" Height="auto" Width="396">
-                                                            <Image.Source>
-                                                                <BitmapImage UriSource="{x:Bind FirstPicUrl}" DecodePixelType="Logical" DecodePixelWidth="412"/>
-                                                            </Image.Source>
-                                                        </Image>
-                                                    </Grid>
-                                                </controls:DropShadowPanel>
+                                                <Grid Grid.Row="1" MinHeight="96" Background="#F4F5F8" CornerRadius="4">
+                                                    <TextBlock Text="加载中..." HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="16" Opacity="0.7"/>
+                                                    <Image Height="auto" Width="408" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="None" Source="/Assets/Icons/placeholder.png"/>
+                                                    <Image Height="auto" Width="408" HorizontalAlignment="Center" VerticalAlignment="Center" Source="{x:Bind FirstPic}"/>
+                                                    <AppBarButton Width="408" HorizontalAlignment="Center" VerticalContentAlignment="Stretch" VerticalAlignment="Stretch" ToolTipService.ToolTip="查看图片" Click="Button_Click_1"/>
+                                                </Grid>
                                                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,4">
-                                                    <AppBarButton x:Name="LikeAppBarButton" Height="36" Width="72" IsEnabled="True" Click="LikeAppBarButton_Click">
+                                                    <AppBarButton x:Name="LikeAppBarButton" Height="32" Width="72" CornerRadius="2" IsEnabled="True" Click="LikeAppBarButton_Click">
                                                         <AppBarButton.Content>
-                                                            <StackPanel Orientation="Horizontal">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,-4,0,4">
                                                                 <Grid>
                                                                     <Image Source="/Assets/Icons/like.png" Height="20" VerticalAlignment="Center"/>
                                                                     <Image Source="/Assets/Icons/liked.png" Visibility="{x:Bind isFavarite,Mode=OneWay}" Height="20" VerticalAlignment="Center"/>
@@ -294,17 +289,17 @@
                                                             </StackPanel>
                                                         </AppBarButton.Content>
                                                     </AppBarButton>
-                                                    <AppBarButton x:Name="CommentAppBarButton" Height="36" Width="72" Margin="4,0" IsEnabled="True" Click="CommentAppBarButton_Click">
+                                                    <AppBarButton x:Name="CommentAppBarButton" Height="32" Width="72" CornerRadius="2" Margin="4,0" IsEnabled="True" Click="CommentAppBarButton_Click">
                                                         <AppBarButton.Content>
-                                                            <StackPanel Orientation="Horizontal">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,-4,0,4">
                                                                 <Image Source="/Assets/Icons/review.png" Height="20" VerticalAlignment="Center"/>
                                                                 <TextBlock Text="{x:Bind Review}" VerticalAlignment="Center" Margin="4"/>
                                                             </StackPanel>
                                                         </AppBarButton.Content>
                                                     </AppBarButton>
-                                                    <AppBarButton x:Name="ShareAppBarButton" Height="36" Width="72" IsEnabled="True" Click="ShareAppBarButton_Click">
+                                                    <AppBarButton x:Name="ShareAppBarButton" Height="32" Width="72" CornerRadius="2" IsEnabled="True" Click="ShareAppBarButton_Click">
                                                         <AppBarButton.Content>
-                                                            <StackPanel Orientation="Horizontal">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,-4,0,4">
                                                                 <Image Source="/Assets/Icons/share.png" Height="20" VerticalAlignment="Center"/>
                                                                 <TextBlock Text="{x:Bind Share}" VerticalAlignment="Center" Margin="4"/>
                                                             </StackPanel>
@@ -345,7 +340,7 @@
                             <FlipView x:Name="BannerFlipView" Height="auto" BorderThickness="0" HorizontalAlignment="Center" VerticalAlignment="Center" ItemsSource="{x:Bind BannersObservableCollection, Mode=OneWay}">
                                 <FlipView.ItemTemplate>
                                     <DataTemplate x:DataType="local1:Banner">
-                                        <HyperlinkButton Height="auto" Width="auto" Margin="0,-6" Click="HyperlinkButton_Click">
+                                        <HyperlinkButton Margin="0,-6" Click="HyperlinkButton_Click">
                                             <HyperlinkButton.Content>
                                                 <Image Source="{x:Bind src}" Stretch="UniformToFill"/>
                                             </HyperlinkButton.Content>
@@ -367,7 +362,7 @@
                                             <RowDefinition Height="32"/>
                                             <RowDefinition/>
                                         </Grid.RowDefinitions>
-                                        <Image Grid.Row="0" Source="{x:Bind CoverImage}" Stretch="UniformToFill" ToolTipService.ToolTip="将打开网页查看活动"/>
+                                        <Image Grid.Row="0" Source="{x:Bind ImageSource}" Height="224" Stretch="UniformToFill" ToolTipService.ToolTip="将打开网页查看活动"/>
                                         <Polygon Fill="#bb000000" Points="0,0,96,0,84,21,0,21"/>
                                         <TextBlock Text="{x:Bind DueDays}" CharacterSpacing="128" FontSize="12" Foreground="White" Margin="4,2,0,0"/>
                                         <TextBlock Grid.Row="1" Text="{x:Bind Title}" CharacterSpacing="48" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -396,10 +391,14 @@
                                         <TextBlock Text="主界面亚克力" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
                                     </ToggleSwitch.Header>
                                 </ToggleSwitch>
+                                <StackPanel Orientation="Horizontal" Margin="0,8">
+                                    <Button Content="清理缓存" Style="{StaticResource ButtonRevealStyle}" BorderThickness="2" CornerRadius="4" Height="28" FontSize="13" Padding="4,-6" Click="Button_Click_9"/>
+                                    <ProgressRing x:Name="ClearingProgressRing" Height="24" Width="24" IsActive="False" Margin="12,0,0,0"/>
+                                </StackPanel>
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="关于此应用" FontWeight="Bold" Margin="0,8,0,0"/>
                                 <Image Height="18" HorizontalAlignment="Left" Margin="4,8" Source="/Assets/Pictures/logo.png"/>
-                                <TextBlock Text="v 2.2.4β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
+                                <TextBlock Text="v 2.3.3β" FontStyle="Italic" Opacity="0.7" Margin="4,0"/>
                                 <TextBlock FontSize="12" Text="2016-2020 NoMewing." Margin="4,4,0,0" Opacity="0.5"/>
                                 <MenuFlyoutSeparator/>
                                 <TextBlock Text="反馈" FontWeight="Bold" Margin="0,8,0,0"/>

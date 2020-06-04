@@ -6,7 +6,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Background;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Media.Imaging;
+using 图虫.Helpers;
 using 图虫.ViewModels;
 
 namespace 图虫
@@ -20,13 +23,14 @@ namespace 图虫
         public string PostID { get; set; }
         public string PostDate { get; set; }
         public string FirstPicUrl { get; set; }
+        public BitmapImage FirstPic { get; set; }
         public int PicsCount { get; set; } = 0;
         public Visibility MultiPics { get; set; } = Visibility.Collapsed;
         public Visibility HasDescription { get; set; } = Visibility.Collapsed;
         public Visibility HasTags { get; set; } = Visibility.Collapsed;
 
-        private int _like = 0;
-        public int Like
+        private double _like = 0;
+        public double Like
         {
             get { return this._like; }
             set
@@ -36,13 +40,13 @@ namespace 图虫
             }
         }
 
-        public int Review { get; set; } = 0;
-        public int Share { get; set; } = 0;
+        public double Review { get; set; } = 0;
+        public double Share { get; set; } = 0;
         public string Description { get; set; }
         public ObservableCollection<string> Tags { get; set; } = new ObservableCollection<string>();
         public string TagsDesc { get; set; }
         public bool InfoComplete { get; set; } = false;
-        public ObservableCollection<string> Pictures { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<AsyncBitmapImage> Pictures { get; set; } = new ObservableCollection<AsyncBitmapImage>();
         public List<string> PicturesDesc { get; set; } = new List<string>();
         public List<string> PicturesTitle { get; set; } = new List<string>();
         public List<string> PicturesID { get; set; } = new List<string>();
@@ -79,6 +83,13 @@ namespace 图虫
 
         // 这个属性用于在MorePicturesPage到ImageDetailPage传递参数时标记用户点击的是第几张图片
         public int ReadingIndex { get; set; } = 0;
+
+        public async Task LoadImageAsync(int decodeWidth = 412)
+        {
+            FirstPic = await ImageLoader.LoadImageAsync(FirstPicUrl);
+            FirstPic.DecodePixelType = DecodePixelType.Logical;
+            FirstPic.DecodePixelWidth = decodeWidth;
+        }
 
         ~FeedViewModel()
         {
@@ -129,7 +140,7 @@ namespace 图虫
                     this.HasTags = (feedlist.entry.tags.Length == 0) ? Visibility.Collapsed : Visibility.Visible;
                     this.isFavarite = feedlist.entry.is_favorite == true ? Visibility.Visible : Visibility.Collapsed;
                     this.isFollowing = feedlist.entry.site.is_following;
-                    this.Pictures = new ObservableCollection<string>();
+                    this.Pictures = new ObservableCollection<AsyncBitmapImage>();
                     this.PicturesDesc = new List<string>();
                     this.PicturesTitle = new List<string>();
                     this.PicturesID = new List<string>();
@@ -137,7 +148,7 @@ namespace 图虫
                     {
                         foreach (var item in feedlist.entry.images)
                         {
-                            this.Pictures.Add("https://photo.tuchong.com/" + item.user_id + "/f/" + item.img_id + ".jpg");
+                            this.Pictures.Add(new AsyncBitmapImage() { ImageUri = "https://photo.tuchong.com/" + item.user_id + "/f/" + item.img_id + ".jpg" });
                             this.PicturesDesc.Add(item.description);
                             this.PicturesTitle.Add(item.title);
                             this.PicturesID.Add(item.img_id.ToString());
@@ -186,7 +197,7 @@ namespace 图虫
                 this.HasTags = (postlist.tags.Length == 0) ? Visibility.Collapsed : Visibility.Visible;
                 this.isFavarite = postlist.is_favorite == true ? Visibility.Visible : Visibility.Collapsed;
                 this.isFollowing = postlist.site.is_following;
-                this.Pictures = new ObservableCollection<string>();
+                this.Pictures = new ObservableCollection<AsyncBitmapImage>();
                 this.PicturesDesc = new List<string>();
                 this.PicturesTitle = new List<string>();
                 this.PicturesID = new List<string>();
@@ -194,7 +205,7 @@ namespace 图虫
                 {
                     foreach (var item in postlist.images)
                     {
-                        this.Pictures.Add("https://photo.tuchong.com/" + postlist.images[0].user_id + "/f/" + item.img_id + ".jpg");
+                        this.Pictures.Add(new AsyncBitmapImage() { ImageUri = "https://photo.tuchong.com/" + postlist.images[0].user_id + "/f/" + item.img_id + ".jpg" });
                         this.PicturesDesc.Add(item.description);
                         this.PicturesTitle.Add(item.title);
                         this.PicturesID.Add(item.img_id.ToString());
@@ -229,6 +240,9 @@ namespace 图虫
                 this.PicturesID = photograph.PicturesID;
                 this.isFavarite = photograph.isFavorite;
                 this.isFollowing = photograph.isFollowing;
+                this.Description = photograph.Description;
+                this.HasDescription = (photograph.Description.Trim() == "") ? Visibility.Collapsed : Visibility.Visible;
+                this.Like = photograph.LikeCount;
                 this.InfoComplete = true;
             }
             catch
@@ -258,10 +272,13 @@ namespace 图虫
                     }
                 }
                 catch { }
+                this.Description = posts.excerpt;
+                this.HasDescription = (posts.excerpt.Trim() == "") ? Visibility.Collapsed : Visibility.Visible;
+                this.Like = posts.favorites;
                 this.HasTags = (posts.tags.Length == 0) ? Visibility.Collapsed : Visibility.Visible;
                 this.isFavarite = posts.is_favorite == true ? Visibility.Visible : Visibility.Collapsed;
                 this.isFollowing = posts.site.is_following;
-                this.Pictures = new ObservableCollection<string>();
+                this.Pictures = new ObservableCollection<AsyncBitmapImage>();
                 this.PicturesDesc = new List<string>();
                 this.PicturesTitle = new List<string>();
                 this.PicturesID = new List<string>();
@@ -269,7 +286,7 @@ namespace 图虫
                 {
                     foreach (var item in posts.images)
                     {
-                        this.Pictures.Add(item.source.f);
+                        this.Pictures.Add(new AsyncBitmapImage() { ImageUri = item.source.f });
                         this.PicturesDesc.Add(item.excerpt);
                         this.PicturesTitle.Add(item.title);
                         this.PicturesID.Add(item.img_id.ToString());
@@ -296,6 +313,9 @@ namespace 图虫
                 this.PostID = entry.post_id.ToString();
                 this.FirstPicUrl = entry.images[0].source.f;
                 this.PicsCount = entry.images.Length;
+                this.Description = entry.excerpt;
+                this.HasDescription = (entry.excerpt.Trim() == "") ? Visibility.Collapsed : Visibility.Visible;
+                this.Like = entry.favorites;
                 this.Tags = new ObservableCollection<string>();
                 try
                 {
@@ -309,7 +329,7 @@ namespace 图虫
                 this.isFavarite = entry.is_favorite == true ? Visibility.Visible : Visibility.Collapsed;
                 this.isFollowing = entry.site.is_following;
                 this.Title = entry.title;
-                this.Pictures = new ObservableCollection<string>();
+                this.Pictures = new ObservableCollection<AsyncBitmapImage>();
                 this.PicturesDesc = new List<string>();
                 this.PicturesTitle = new List<string>();
                 this.PicturesID = new List<string>();
@@ -317,7 +337,7 @@ namespace 图虫
                 {
                     foreach (var item in entry.images)
                     {
-                        this.Pictures.Add(item.source.f);
+                        this.Pictures.Add(new AsyncBitmapImage() { ImageUri = item.source.f });
                         this.PicturesDesc.Add(item.excerpt);
                         this.PicturesTitle.Add(item.title);
                         this.PicturesID.Add(item.img_id.ToString());

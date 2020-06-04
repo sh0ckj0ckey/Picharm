@@ -3,9 +3,12 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using 图虫.Helpers;
 using 图虫.Models.Photograph;
@@ -26,6 +29,8 @@ namespace 图虫
         private bool shouldGoBack = false;
         ObservableCollection<AllPhotographViewModel> PhotographObservableCollection = new ObservableCollection<AllPhotographViewModel>();
         ObservableCollection<FeedViewModel> PhotographViewModelsObservableCollection = new ObservableCollection<FeedViewModel>();
+
+        bool _emergencyStop = false;
 
         private PhotographerViewModel _viewModel;
         PhotographerViewModel ViewModel
@@ -48,22 +53,39 @@ namespace 图虫
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter.GetType().Equals(typeof(bool)))
-            {
-                shouldGoBack = (bool)e.Parameter;
-            }
             try
             {
-                _photographerID = MsgBus.Instance.PhotographerID.Substring(4);
-                LoadInfo(_photographerID);
-                LoadPhotos(_photographerID);
+                if (e.Parameter.GetType().Equals(typeof(bool)))
+                {
+                    shouldGoBack = (bool)e.Parameter;
+                }
+                try
+                {
+                    _emergencyStop = false;
+                    _photographerID = MsgBus.Instance.PhotographerID.Substring(4);
+                    LoadInfo(_photographerID);
+                    LoadPhotos(_photographerID);
+                }
+                catch
+                {
+                    FailedGrid.Visibility = Visibility.Visible;
+                }
             }
-            catch
-            {
-                FailedGrid.Visibility = Visibility.Visible;
-            }
-
+            catch { }
             base.OnNavigatedTo(e);
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            try
+            {
+                _emergencyStop = true;
+                PhotographObservableCollection?.Clear();
+                PhotographViewModelsObservableCollection?.Clear();
+                GC.Collect();
+            }
+            catch { }
+            base.OnNavigatedFrom(e);
         }
 
         /// <summary>
@@ -72,15 +94,19 @@ namespace 图虫
         /// <param name="id"></param>
         private async void LoadInfo(string id)
         {
-            //try
-            //{
-            var info = await ApiHelper.GetPhotographerInfo(id);
-            ViewModel = new PhotographerViewModel(info);
-            //}
-            //catch
-            //{
-            //    FailedGrid.Visibility = Visibility.Visible;
-            //}
+            try
+            {
+                var info = await TuchongApi.GetPhotographerInfo(id);
+                if (info == null)
+                {
+                    return;
+                }
+                ViewModel = new PhotographerViewModel(info);
+            }
+            catch
+            {
+                FailedGrid.Visibility = Visibility.Visible;
+            }
         }
 
         /// <summary>
@@ -89,33 +115,46 @@ namespace 图虫
         /// <param name="id"></param>
         private async void LoadPhotos(string id)
         {
-            string para = "count=20&page=1";
-            Photograph photographs = await ApiHelper.GetPhotograph(para, id);
-            if (photographs == null || photographs.result == "ERROR" || photographs.result == "FAILED")
+            try
             {
-                FailedGrid.Visibility = Visibility.Visible;
-                return;
-            }
-            foreach (var item in photographs.post_list)
-            {
-                try
+                string para = "count=20&page=1";
+                Photograph photographs = await TuchongApi.GetPhotograph(para, id);
+                if (photographs == null || photographs.result == "ERROR" || photographs.result == "FAILED")
                 {
-                    PhotographObservableCollection.Add(new AllPhotographViewModel { Cover = item.images[0].source.m, Count = item.image_count });
-                    PhotographViewModelsObservableCollection.Add(new FeedViewModel(new PhotographViewModel(item)));
+                    FailedGrid.Visibility = Visibility.Visible;
+                    return;
                 }
-                catch { continue; }
+                foreach (var item in photographs.post_list)
+                {
+                    if (_emergencyStop)
+                    {
+                        break;
+                    }
+                    try
+                    {
+                        var listItem = new AllPhotographViewModel { Cover = item.images[0].source.l, Count = item.image_count };
+                        await listItem.LoadImageAsync();
+                        PhotographObservableCollection.Add(listItem);
+                        PhotographViewModelsObservableCollection.Add(new FeedViewModel(new PhotographViewModel(item)));
+                    }
+                    catch { continue; }
+                }
+                if (photographs.more == false)
+                {
+                    LoadmoreButton.Visibility = Visibility.Collapsed;
+                    EndImage.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    LoadmoreButton.Visibility = Visibility.Visible;
+                    EndImage.Visibility = Visibility.Collapsed;
+                }
+                _beforetimestamp = photographs.before_timestamp;
             }
-            if (photographs.more == false)
+            catch (Exception e)
             {
-                LoadmoreButton.Visibility = Visibility.Collapsed;
-                EndImage.Visibility = Visibility.Visible;
+                DialogShower.ShowDialog("应用程序遇到了异常", e.Message);
             }
-            else
-            {
-                LoadmoreButton.Visibility = Visibility.Visible;
-                EndImage.Visibility = Visibility.Collapsed;
-            }
-            _beforetimestamp = photographs.before_timestamp;
         }
 
         /// <summary>
@@ -179,8 +218,16 @@ namespace 图虫
         /// <param name="e"></param>
         private void PicturesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 第二个参数 true 表示这个 MorePicturesPage 是从摄影师页面跳转的，返回的时候不要直接回到 BlankPage
-            this.Frame.Navigate(typeof(MorePicturesPage), PhotographViewModelsObservableCollection[PicturesListView.SelectedIndex]);
+            try
+            {
+                if (PicturesListView.SelectedIndex < 0)
+                {
+                    return;
+                }
+                // 第二个参数 true 表示这个 MorePicturesPage 是从摄影师页面跳转的，返回的时候不要直接回到 BlankPage
+                this.Frame.Navigate(typeof(MorePicturesPage), PhotographViewModelsObservableCollection[PicturesListView.SelectedIndex]);
+            }
+            catch { }
         }
 
         /// <summary>
@@ -190,37 +237,47 @@ namespace 图虫
         /// <param name="e"></param>
         private async void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            string para = "count=20&page=" + _page + "&before_timestamp=" + _beforetimestamp;
-            Photograph photographs = await ApiHelper.GetPhotograph(para, _photographerID);
-            if (photographs == null || photographs.result == "ERROR" || photographs.result == "FAILED")
+            try
             {
-                FailedGrid.Visibility = Visibility.Visible;
-                return;
-            }
-            foreach (var item in photographs.post_list)
-            {
-                try
+                string para = "count=20&page=" + _page + "&before_timestamp=" + _beforetimestamp;
+                Photograph photographs = await TuchongApi.GetPhotograph(para, _photographerID);
+                if (photographs == null || photographs.result == "ERROR" || photographs.result == "FAILED")
                 {
-                    PhotographObservableCollection.Add(new AllPhotographViewModel { Cover = item.images[0].source.m, Count = item.image_count });
-                    PhotographViewModelsObservableCollection.Add(new FeedViewModel(new PhotographViewModel(item)));
+                    FailedGrid.Visibility = Visibility.Visible;
+                    return;
                 }
-                catch
+                foreach (var item in photographs.post_list)
                 {
-                    continue;
+                    if (_emergencyStop)
+                    {
+                        break;
+                    }
+                    try
+                    {
+                        var listItem = new AllPhotographViewModel { Cover = item.images[0].source.m, Count = item.image_count };
+                        await listItem.LoadImageAsync();
+                        PhotographObservableCollection.Add(listItem);
+                        PhotographViewModelsObservableCollection.Add(new FeedViewModel(new PhotographViewModel(item)));
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                 }
+                if (photographs.more == false)
+                {
+                    LoadmoreButton.Visibility = Visibility.Collapsed;
+                    EndImage.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    LoadmoreButton.Visibility = Visibility.Visible;
+                    EndImage.Visibility = Visibility.Collapsed;
+                }
+                _page++;
+                _beforetimestamp = photographs.before_timestamp;
             }
-            if (photographs.more == false)
-            {
-                LoadmoreButton.Visibility = Visibility.Collapsed;
-                EndImage.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                LoadmoreButton.Visibility = Visibility.Visible;
-                EndImage.Visibility = Visibility.Collapsed;
-            }
-            _page++;
-            _beforetimestamp = photographs.before_timestamp;
+            catch { }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -234,26 +291,33 @@ namespace 图虫
         /// <param name="e"></param>
         private async void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
-            if (LoginHelper.LoggedIn == false)
+            try
             {
-                ShowDialog("请先登录哦");
-                return;
-            }
-            var resp = await ApiHelper.PutFollow(ViewModel.ID);
-            if (resp != null)
-            {
-                if (resp.result == "SUCCESS")
+                if (LoginHelper.LoggedIn == false)
                 {
-                    ViewModel.isFollowing = true;
+                    DialogShower.ShowDialog("请先登录哦");
+                    return;
+                }
+                var resp = await TuchongApi.PutFollow(ViewModel.ID);
+                if (resp != null)
+                {
+                    if (resp.result == "SUCCESS")
+                    {
+                        ViewModel.isFollowing = true;
+                    }
+                    else
+                    {
+                        DialogShower.ShowDialog(resp.message);
+                    }
                 }
                 else
                 {
-                    ShowDialog(resp.message);
+                    DialogShower.ShowDialog("关注失败，数据解析错误");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                ShowDialog("关注失败，数据解析错误");
+                DialogShower.ShowDialog("关注异常", ex.Message);
             }
         }
 
@@ -264,45 +328,34 @@ namespace 图虫
         /// <param name="e"></param>
         private async void AppBarButton_Click_1(object sender, RoutedEventArgs e)
         {
-            if (LoginHelper.LoggedIn == false)
+            try
             {
-                ShowDialog("请先登录哦");
-                return;
-            }
-            var resp = await ApiHelper.DeleteFollow(ViewModel.ID);
-            if (resp != null)
-            {
-                if (resp.result == "SUCCESS")
+                if (LoginHelper.LoggedIn == false)
                 {
-                    ViewModel.isFollowing = false;
+                    DialogShower.ShowDialog("请先登录哦");
+                    return;
+                }
+                var resp = await TuchongApi.DeleteFollow(ViewModel.ID);
+                if (resp != null)
+                {
+                    if (resp.result == "SUCCESS")
+                    {
+                        ViewModel.isFollowing = false;
+                    }
+                    else
+                    {
+                        DialogShower.ShowDialog(resp.message);
+                    }
                 }
                 else
                 {
-                    ShowDialog(resp.message);
+                    DialogShower.ShowDialog("取消关注失败，数据解析错误");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                ShowDialog("取消关注失败，数据解析错误");
+                DialogShower.ShowDialog("取关异常", ex.Message);
             }
-        }
-
-        public static async void ShowDialog(string content)
-        {
-            var dialog = new ContentDialog()
-            {
-                Title = ":(",
-                Content = content,
-                PrimaryButtonText = "好的",
-                FullSizeDesired = false
-            };
-
-            dialog.PrimaryButtonClick += (_s, _e) => { dialog.Hide(); };
-            try
-            {
-                await dialog.ShowAsync();
-            }
-            catch { }
         }
     }
 
@@ -310,6 +363,15 @@ namespace 图虫
     {
         public string Cover { get; set; }
         public double Count { get; set; } = 1;
+
+        public BitmapImage ImageSource { get; set; }
+
+        public async Task LoadImageAsync(int decodeWidth = 196)
+        {
+            ImageSource = await ImageLoader.LoadImageAsync(Cover);
+            ImageSource.DecodePixelType = DecodePixelType.Logical;
+            ImageSource.DecodePixelWidth = decodeWidth;
+        }
     }
 
 

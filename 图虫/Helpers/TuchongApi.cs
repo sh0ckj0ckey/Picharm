@@ -9,7 +9,7 @@ using 图虫.ViewModels;
 
 namespace 图虫
 {
-    public static class ApiHelper
+    public static class TuchongApi
     {
         /// <summary>
         /// 获取“推荐”内容
@@ -38,15 +38,15 @@ namespace 图虫
                         JsonSerializerSettings jss = new JsonSerializerSettings
                         {
                             NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
+                            MissingMemberHandling = MissingMemberHandling.Ignore,
                         };
                         feed = JsonConvert.DeserializeObject<Models.Feeds.Feed>(jsonMessage, jss);
                     }
-                    catch
+                    catch (Exception e)
                     {
                         return new Models.Feeds.Feed
                         {
-                            message = "获取或者解析数据失败，可能是服务器问题，或者请发送这个：" + para + " 给开发者 yaoyiming123@live.com，将尽快排查，谢谢！"
+                            message = "获取或者解析数据失败，可能是服务器问题，请尝试刷新\n " + e.Message
                         };
                     }
                     return feed;
@@ -255,9 +255,7 @@ namespace 图虫
                     }
                 }
                 catch
-                {
-                    return result;
-                }
+                { }
                 return result;
             }
         }
@@ -762,7 +760,11 @@ namespace 图虫
         /// <returns></returns>
         internal static string Unicode2String(string source)
         {
-            return new Regex(@"\\u([0-9A-F]{4})", RegexOptions.IgnoreCase | RegexOptions.Compiled).Replace(source, x => Convert.ToChar(Convert.ToUInt16(x.Result("$1"), 16)).ToString());
+            try
+            {
+                return new Regex(@"\\u([0-9A-F]{4})", RegexOptions.IgnoreCase | RegexOptions.Compiled).Replace(source, x => Convert.ToChar(Convert.ToUInt16(x.Result("$1"), 16)).ToString());
+            }
+            catch { return ""; }
         }
 
     }

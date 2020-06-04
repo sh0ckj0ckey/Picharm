@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas.Text;
+using System;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -18,6 +20,9 @@ namespace 图虫
         ObservableCollection<TagsSearchViewModel> TagsCollection = new ObservableCollection<TagsSearchViewModel>();
         ObservableCollection<PostsSearchViewModel> PostsCollection = new ObservableCollection<PostsSearchViewModel>();
 
+        bool _emergencyStop = false;
+        string search = "";
+
         public SearchPage()
         {
             this.InitializeComponent();
@@ -31,17 +36,25 @@ namespace 图虫
             //{
             //    animation.TryStart(SearchTextBox, new UIElement[] { SearchButton });
             //}
-
-            if (e.Parameter.GetType().Equals(typeof(string)))
+            try
             {
-                try
+                _emergencyStop = false;
+
+                if (e.Parameter.GetType().Equals(typeof(string)))
                 {
-                    string search = (string)e.Parameter;
-                    SearchingTextBlock.Text = "搜索结果: " + search;
-                    StartSearch(search);
+                    try
+                    {
+                        if (search != (string)e.Parameter)
+                        {
+                            search = (string)e.Parameter;
+                            SearchingTextBlock.Text = "搜索结果: " + search;
+                            StartSearch(search);
+                        }
+                    }
+                    catch { }
                 }
-                catch { }
             }
+            catch { }
             base.OnNavigatedTo(e);
         }
 
@@ -57,6 +70,7 @@ namespace 图虫
         //    }
         //}
 
+
         /// <summary>
         /// 返回
         /// </summary>
@@ -64,11 +78,23 @@ namespace 图虫
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                _emergencyStop = true;
+                SitesCollection?.Clear();
+                TagsCollection?.Clear();
+                PostsCollection?.Clear();
+                GC.Collect();
+            }
+            catch { }
             //if (this.Frame.CanGoBack)
             //{
             //    this.Frame.GoBack();
             //}
+            //else
+            //{
             this.Frame.Navigate(typeof(BlankPage));
+            //}
         }
 
         ///// <summary>
@@ -103,77 +129,82 @@ namespace 图虫
 
         private async void StartSearch(string query)
         {
-            EmptyGrid.Visibility = Visibility.Collapsed;
-            SearchingProgressRing.IsActive = true;
-            SearchingGrid.Visibility = Visibility.Visible;
-            SearchResultGrid.Visibility = Visibility.Collapsed;
-
-            SitesTitleGrid.Visibility = Visibility.Visible;
-            SitesListGrid.Visibility = Visibility.Visible;
-            TagsTitleGrid.Visibility = Visibility.Visible;
-            TagsListGrid.Visibility = Visibility.Visible;
-            PostsTitleGrid.Visibility = Visibility.Visible;
-            PostsListGrid.Visibility = Visibility.Visible;
-
-            SitesCollection.Clear();
-            TagsCollection.Clear();
-            PostsCollection.Clear();
-
-            var sites = await ApiHelper.GetSitesSearchResult(query);
-            var tags = await ApiHelper.GetTagsSearchResult(query);
-            var posts = await ApiHelper.GetPostsSearchResult(query);
-
-            if (sites != null && sites.data != null && sites.data.site_list != null & sites.data.site_list.Length > 0)
+            try
             {
-                foreach (var item in sites.data.site_list)
-                {
-                    SitesCollection.Add(new SitesSearchViewModel(item));
-                }
-            }
+                EmptyGrid.Visibility = Visibility.Collapsed;
+                SearchingProgressBar.IsIndeterminate = true;
 
-            if (tags != null && tags.data != null && tags.data.tag_list != null & tags.data.tag_list.Length > 0)
-            {
-                foreach (var item in tags.data.tag_list)
-                {
-                    TagsCollection.Add(new TagsSearchViewModel(item));
-                }
-            }
-
-            if (posts != null && posts.data != null && posts.data.post_list != null & posts.data.post_list.Length > 0)
-            {
-                foreach (var item in posts.data.post_list)
-                {
-                    PostsCollection.Add(new PostsSearchViewModel(item));
-                }
-            }
-
-            if (SitesCollection.Count <= 0)
-            {
                 SitesTitleGrid.Visibility = Visibility.Collapsed;
                 SitesListGrid.Visibility = Visibility.Collapsed;
-            }
-
-            if (TagsCollection.Count <= 0)
-            {
                 TagsTitleGrid.Visibility = Visibility.Collapsed;
                 TagsListGrid.Visibility = Visibility.Collapsed;
-            }
-
-            if (PostsCollection.Count <= 0)
-            {
                 PostsTitleGrid.Visibility = Visibility.Collapsed;
                 PostsListGrid.Visibility = Visibility.Collapsed;
-            }
 
-            if (SitesCollection.Count <= 0 && TagsCollection.Count <= 0 && PostsCollection.Count <= 0)
-            {
-                EmptyGrid.Visibility = Visibility.Visible;
-            }
+                SitesCollection.Clear();
+                TagsCollection.Clear();
+                PostsCollection.Clear();
 
-            SearchingProgressRing.IsActive = false;
-            SearchingGrid.Visibility = Visibility.Collapsed;
-            SearchResultGrid.Visibility = Visibility.Visible;
-            SearchResultPopIn.Begin();
+                var sites = await TuchongApi.GetSitesSearchResult(query);
+                if (sites != null && sites.data != null && sites.data.site_list != null & sites.data.site_list.Length > 0)
+                {
+                    SitesTitleGrid.Visibility = Visibility.Visible;
+                    SitesListGrid.Visibility = Visibility.Visible;
+                    foreach (var item in sites.data.site_list)
+                    {
+                        if (_emergencyStop)
+                        {
+                            break;
+                        }
+                        var site = new SitesSearchViewModel(item);
+                        await site.LoadImageAsync();
+                        SitesCollection.Add(site);
+                    }
+                }
+
+                var tags = await TuchongApi.GetTagsSearchResult(query);
+                if (tags != null && tags.data != null && tags.data.tag_list != null & tags.data.tag_list.Length > 0)
+                {
+                    TagsTitleGrid.Visibility = Visibility.Visible;
+                    TagsListGrid.Visibility = Visibility.Visible;
+                    foreach (var item in tags.data.tag_list)
+                    {
+                        if (_emergencyStop)
+                        {
+                            break;
+                        }
+                        var tag = new TagsSearchViewModel(item);
+                        await tag.LoadImageAsync();
+                        TagsCollection.Add(tag);
+                    }
+                }
+
+                var posts = await TuchongApi.GetPostsSearchResult(query);
+                if (posts != null && posts.data != null && posts.data.post_list != null & posts.data.post_list.Length > 0)
+                {
+                    PostsTitleGrid.Visibility = Visibility.Visible;
+                    PostsListGrid.Visibility = Visibility.Visible;
+                    foreach (var item in posts.data.post_list)
+                    {
+                        if (_emergencyStop)
+                        {
+                            break;
+                        }
+                        var post = new PostsSearchViewModel(item);
+                        await post.LoadImageAsync();
+                        PostsCollection.Add(post);
+                    }
+                }
+
+                if (SitesCollection.Count <= 0 && TagsCollection.Count <= 0 && PostsCollection.Count <= 0)
+                {
+                    EmptyGrid.Visibility = Visibility.Visible;
+                }
+
+                SearchingProgressBar.IsIndeterminate = false;
+            }
+            catch { }
+            //SearchResultPopIn.Begin();
         }
 
         //private void Page_Loaded(object sender, RoutedEventArgs e)
@@ -183,26 +214,38 @@ namespace 图虫
 
         private void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
-            AppBarButton bt = sender as AppBarButton;
-            SitesSearchViewModel site = (SitesSearchViewModel)bt.DataContext;
-            Helpers.MsgBus.Instance.PhotographerID = "ID: " + site.Id;
-            this.Frame.Navigate(typeof(PhotographerPage), true);
+            try
+            {
+                AppBarButton bt = sender as AppBarButton;
+                SitesSearchViewModel site = (SitesSearchViewModel)bt.DataContext;
+                Helpers.MsgBus.Instance.PhotographerID = "ID: " + site.Id;
+                this.Frame.Navigate(typeof(PhotographerPage), true);
+            }
+            catch { }
         }
 
         private async void AppBarButton_Click_1(object sender, RoutedEventArgs e)
         {
-            AppBarButton bt = sender as AppBarButton;
-            TagsSearchViewModel tag = (TagsSearchViewModel)bt.DataContext;
-            await Windows.System.Launcher.LaunchUriAsync(new Uri(tag.Url));
+            try
+            {
+                AppBarButton bt = sender as AppBarButton;
+                TagsSearchViewModel tag = (TagsSearchViewModel)bt.DataContext;
+                await Windows.System.Launcher.LaunchUriAsync(new Uri(tag.Url));
+            }
+            catch { }
         }
 
         private void AppBarButton_Click_2(object sender, RoutedEventArgs e)
         {
-            Button bt = sender as Button;
-            PostsSearchViewModel post = (PostsSearchViewModel)bt.DataContext;
-            var para = new FeedViewModel(post.PostRaw);
-            para.ShouldGoBack = true;
-            this.Frame.Navigate(typeof(MorePicturesPage), para);
+            try
+            {
+                Button bt = sender as Button;
+                PostsSearchViewModel post = (PostsSearchViewModel)bt.DataContext;
+                var para = new FeedViewModel(post.PostRaw);
+                para.ShouldGoBack = true;
+                this.Frame.Navigate(typeof(MorePicturesPage), para);
+            }
+            catch { }
         }
     }
 }

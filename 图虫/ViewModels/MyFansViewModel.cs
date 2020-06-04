@@ -41,5 +41,12 @@ namespace 图虫.ViewModels
             get => _fansList;
             set => Set(ref _fansList, value);
         }
+
+        public void ResetData()
+        {
+            FansList.Clear();
+            HasMore = Visibility.Visible;
+            End = Visibility.Collapsed;
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace 图虫.Models.CategoryItem
+﻿
+
+namespace 图虫.Models.CategoryItem
 {
     public class CategoryItem
     {

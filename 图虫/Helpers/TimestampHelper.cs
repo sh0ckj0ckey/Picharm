@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace 图虫.Helpers
 {
@@ -6,8 +7,12 @@ namespace 图虫.Helpers
     {
         public static string GetTimestamp()
         {
-            var time = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            return time.ToString();
+            try
+            {
+                var time = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
+                return time.ToString();
+            }
+            catch { return "1970-1-1"; }
         }
     }
 }

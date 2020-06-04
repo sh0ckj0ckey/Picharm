@@ -9,7 +9,7 @@
     xmlns:m_helper="using:MaterialLibs.Helpers"
     xmlns:animations="using:Microsoft.Toolkit.Uwp.UI.Animations"
     xmlns:html="using:XAMLHtml" 
-    xmlns:vt="using:图虫.Converters"
+    xmlns:vt="using:图虫.Converters" xmlns:viewmodels="using:图虫.ViewModels"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     RequestedTheme="Light">
@@ -37,32 +37,51 @@
         <ScrollViewer Grid.Row="0" Grid.RowSpan="2" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollMode="Enabled">
             <StackPanel>
                 <Rectangle Fill="Transparent" Height="108"/>
-                <TextBlock Text="所有图片" FontSize="16" FontWeight="Bold" Margin="16,8"/>
-                <ListView x:Name="PicturesListView" Margin="12,0,8,12" ItemsSource="{x:Bind allPictures}" 
+                <ProgressBar x:Name="LoadingProgressBar" Background="Transparent" IsIndeterminate="False" HorizontalAlignment="Stretch"/>
+                <Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="所有图片(共" FontSize="16" FontWeight="Bold" Margin="16,8,2,8" HorizontalAlignment="Left"/>
+                        <TextBlock Text="{x:Bind oneFeed.PicsCount}" FontSize="16" FontWeight="Bold" Margin="0,8" HorizontalAlignment="Left"/>
+                        <TextBlock Text="张)" FontSize="16" FontWeight="Bold" Margin="2,8,16,8" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4,16,0">
+                        <Image Source="/Assets/Icons/liked.png" Height="15" VerticalAlignment="Center" Margin="12,0,4,0"/>
+                        <TextBlock Text="有" FontSize="13"/>
+                        <TextBlock Text="{x:Bind oneFeed.Like}" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="人喜欢这个作品" FontSize="13"/>
+                    </StackPanel>
+                </Grid>
+                <GridView x:Name="PicturesListView" Margin="12" ItemsSource="{x:Bind allPictures}" 
                           IsItemClickEnabled="True" SelectionMode="Single" ScrollViewer.VerticalScrollMode="Disabled" 
                           SelectionChanged="PicturesListView_SelectionChanged">
-                    <ListView.ItemsPanel>
+                    <GridView.Template>
+                        <ControlTemplate>
+                            <ItemsPresenter />
+                        </ControlTemplate>
+                    </GridView.Template>
+                    <GridView.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <controls:WrapPanel/>
+                            <controls:StaggeredPanel DesiredColumnWidth="156" HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <Grid Height="156" Width="auto" MinWidth="96" Margin="-8,4" m_helper:VisualHelper.Clip="0,0,0,0">
-                                <Image HorizontalAlignment="Center"
-                                       m_helper:VisualHelper.CenterPoint="Bind" 
-                                       m_helper:ImplicitHelper.Targets="Offset,Scale"
-                                       m_helper:ImplicitHelper.Duration="0:0:0.46"
-                                       PointerEntered="Image_PointerEntered"
-                                       PointerExited="Image_PointerExited">
-                                    <Image.Source>
-                                        <BitmapImage UriSource="{Binding}" DecodePixelType="Logical" DecodePixelHeight="156"/>
-                                    </Image.Source>
-                                </Image>
+                    </GridView.ItemsPanel>
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodels:AsyncBitmapImage">
+                            <Grid Height="auto" Width="156" Margin="0,0" m_helper:VisualHelper.Clip="0,0,0,0">
+                                <controls:ImageEx Height="auto" Width="156" IsCacheEnabled="False" Background="#F4F5F8" 
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="UniformToFill"
+                                                  PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png"
+                                                  m_helper:VisualHelper.CenterPoint="Bind" 
+                                                  m_helper:ImplicitHelper.Targets="Offset,Scale"
+                                                  m_helper:ImplicitHelper.Duration="0:0:0.46"
+                                                  PointerEntered="Image_PointerEntered"
+                                                  PointerExited="Image_PointerExited"
+                                                  Source="{x:Bind ImageSource}"/>
                             </Grid>
                         </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </GridView.ItemTemplate>
+                </GridView>
+                <TextBlock Text="作品简介" FontSize="16" FontWeight="Bold" Margin="16,12,16,8" Visibility="{x:Bind oneFeed.HasDescription}"/>
+                <TextBlock  Margin="14,4,12,8" IsTextSelectionEnabled="True" FontFamily="STKaiti" FontSize="18" Text="{x:Bind oneFeed.Description}" TextWrapping="Wrap" Visibility="{x:Bind oneFeed.HasDescription}"/>
                 <TextBlock Text="标签" FontSize="16" FontWeight="Bold" Margin="16,12,16,8" Visibility="{x:Bind oneFeed.HasTags}"/>
                 <ListView Margin="12,0" Visibility="{x:Bind oneFeed.HasTags}" VerticalAlignment="Center" SelectionMode="None" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled" FontWeight="Light" ItemContainerStyle="{StaticResource ItemContainerStyle}" ItemsSource="{x:Bind oneFeed.Tags}">
                     <ListView.ItemsPanel>
@@ -71,7 +90,7 @@
                         </ItemsPanelTemplate>
                     </ListView.ItemsPanel>
                 </ListView>
-                <TextBlock x:Name="ReviewTextBlock" Text="评论" FontSize="16" FontWeight="Bold" Margin="16,24,16,8"/>
+                <TextBlock x:Name="ReviewTextBlock" Text="评论" FontSize="16" FontWeight="Bold" Margin="16,18,16,8"/>
                 <StackPanel x:Name="NoCommentStackPanel" Visibility="Collapsed" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,32">
                     <Image Height="96" Source="/Assets/Icons/nocontent.png" Opacity="0.7"/>
                     <TextBlock x:Name="NoCommentTextBlock" Text="还没有人评论哦" Opacity="0.3" FontWeight="Bold" Margin="16,4,0,0"/>
@@ -168,7 +187,7 @@
         </Grid>
         <Grid Grid.Row="0">
             <Grid.Background>
-                <AcrylicBrush TintOpacity="0.2" BackgroundSource="Backdrop"/>
+                <AcrylicBrush TintOpacity="0.7" BackgroundSource="Backdrop"/>
             </Grid.Background>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -203,31 +222,31 @@
                 </Grid>
             </Grid>
             <Button Grid.Column="3" Visibility="{x:Bind oneFeed.isFollowing,Converter={StaticResource vtBool2Visibility},ConverterParameter=-,Mode=OneWay}" VerticalAlignment="Center"
-                    BorderBrush="#000000" BorderThickness="1" Background="Transparent" Height="28" CornerRadius="4" Margin="8,16,0,0" ToolTipService.ToolTip="关注"
+                    BorderBrush="#000000" BorderThickness="0" Background="#66dddddd" Height="26" CornerRadius="4" Margin="8,16,0,0" ToolTipService.ToolTip="关注"
                     Click="Button_Click_1">
                 <Button.Content>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="Segoe MDL2 Assets" FontWeight="Bold" Text="&#xE109;" FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text=" 关注" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text=" 关注" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button.Content>
             </Button>
             <Button Grid.Column="3" Visibility="{x:Bind oneFeed.isFollowing,Converter={StaticResource vtBool2Visibility},Mode=OneWay}" VerticalAlignment="Center"
-                    BorderBrush="#000000" BorderThickness="1" Background="Transparent" Height="28" CornerRadius="4" Margin="8,16,0,0" ToolTipService.ToolTip="取消关注"
+                    BorderBrush="#000000" BorderThickness="0" Background="#66dddddd" Height="26" CornerRadius="4" Margin="8,16,0,0" ToolTipService.ToolTip="取消关注"
                     Click="Button_Click_5">
                 <Button.Content>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="Segoe MDL2 Assets" FontWeight="Bold" Text="&#xE10B;" FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text=" 已关注" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text=" 已关注" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button.Content>
             </Button>
             <Button Grid.Column="4" VerticalAlignment="Center" Click="Button_Click_4"
-                    BorderBrush="#000000" BorderThickness="1" Background="Transparent" Height="28" CornerRadius="4" Margin="8,16,16,0">
+                    BorderBrush="#000000" BorderThickness="0" Background="#66dddddd" Height="26" CornerRadius="4" Margin="8,16,16,0">
                 <Button.Content>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock FontFamily="Segoe MDL2 Assets" FontWeight="Bold" Text="&#xE13D;" FontSize="10" VerticalAlignment="Center"/>
-                        <TextBlock Text=" 个人主页" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text=" 个人主页" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button.Content>
             </Button>

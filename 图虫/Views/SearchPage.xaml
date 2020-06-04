@@ -9,7 +9,8 @@
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:vt="using:图虫.Converters"
     mc:Ignorable="d" RequestedTheme="Light"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    NavigationCacheMode="Required">
     <Page.Resources>
         <Style x:Key="SearchButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="{ThemeResource ButtonBackground}"/>
@@ -695,11 +696,11 @@
     </Page.Resources>
 
     <Grid Margin="12,36,12,12">
-        <Grid.Resources>
+        <!--<Grid.Resources>
             <Storyboard x:Name="SearchResultPopIn">
                 <PopInThemeAnimation FromHorizontalOffset="0" FromVerticalOffset="320" Storyboard.TargetName="SearchResultGrid" Duration="00:00:1"/>
             </Storyboard>
-        </Grid.Resources>
+        </Grid.Resources>-->
         <Grid.RowDefinitions>
             <RowDefinition Height="48"/>
             <RowDefinition Height="*"/>
@@ -715,15 +716,13 @@
                 </Button.Content>
             </Button>
             <TextBlock x:Name="SearchingTextBlock" Grid.Column="1" VerticalAlignment="Center" Text="搜索结果" FontSize="20" FontWeight="Bold" Margin="8,0" Foreground="#333333"/>
-        </Grid> 
+        </Grid>
         <StackPanel Grid.Row="1" x:Name="EmptyGrid" Visibility="Collapsed" Opacity="0.7" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Image Source="/Assets/Icons/blank_search.png" Width="276" Height="216" Margin="0,12,0,0" HorizontalAlignment="Center"/>
             <TextBlock Text="这里什么也没有呀" HorizontalAlignment="Center" FontWeight="Bold" FontSize="16" Opacity="0.7"/>
         </StackPanel>
-        <Grid Grid.Row="1" x:Name="SearchingGrid" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <ProgressRing x:Name="SearchingProgressRing" IsActive="False" Height="56" Width="56" HorizontalAlignment="Center"/>
-        </Grid>
-        <ScrollViewer Grid.Row="1" x:Name="SearchResultGrid" Visibility="Collapsed">
+        <ProgressBar x:Name="SearchingProgressBar" Grid.Row="1" IsIndeterminate="False" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
+        <ScrollViewer Grid.Row="1" x:Name="SearchResultGrid">
             <Grid Margin="12,36,24,24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
@@ -733,11 +732,11 @@
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
-                <Grid x:Name="SitesTitleGrid" Grid.Row="0" HorizontalAlignment="Left">
+                <Grid x:Name="SitesTitleGrid" Grid.Row="0" HorizontalAlignment="Left" Visibility="Collapsed">
                     <Line Stroke="#C99A05" HorizontalAlignment="Center" VerticalAlignment="Center" StrokeThickness="14" X2="72" StrokeDashArray="0.05 0.15" Margin="12,16,0,0"/>
                     <TextBlock Text="摄  影  师" FontSize="16"/>
                 </Grid>
-                <Grid x:Name="SitesListGrid" Grid.Row="1">
+                <Grid x:Name="SitesListGrid" Grid.Row="1" Visibility="Collapsed">
                     <ListView ItemsSource="{x:Bind SitesCollection}" IsItemClickEnabled="False" SelectionMode="None"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" 
                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled"
@@ -757,11 +756,9 @@
                                         <RowDefinition Height="auto"/>
                                         <RowDefinition/>
                                     </Grid.RowDefinitions>
-                                    <Image Grid.Row="0" Grid.RowSpan="2" Stretch="UniformToFill" Width="298" VerticalAlignment="Center">
-                                        <Image.Source>
-                                            <BitmapImage UriSource="{x:Bind Background}" DecodePixelType="Logical" DecodePixelWidth="298"/>
-                                        </Image.Source>
-                                    </Image>
+                                    <controls:ImageEx  Grid.Row="0" Grid.RowSpan="2" Stretch="UniformToFill" Width="298"
+                                                       IsCacheEnabled="False" Background="#F4F5F8" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png" Source="{x:Bind ImageSource}"/>
                                     <Ellipse Grid.Row="1" Grid.RowSpan="2" Height="64" Width="64" HorizontalAlignment="Left" VerticalAlignment="Center"
                                          Margin="12,0,36,0" Stroke="#F9F9F9" StrokeThickness="2">
                                         <Ellipse.Fill>
@@ -781,11 +778,11 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
-                <Grid x:Name="TagsTitleGrid" Grid.Row="2" HorizontalAlignment="Left">
+                <Grid x:Name="TagsTitleGrid" Grid.Row="2" HorizontalAlignment="Left" Visibility="Collapsed">
                     <Line Stroke="#C99A05" HorizontalAlignment="Center" VerticalAlignment="Center" StrokeThickness="14" X2="56" StrokeDashArray="0.05 0.15" Margin="12,16,0,0"/>
                     <TextBlock Text="标  签" FontSize="16"/>
                 </Grid>
-                <Grid x:Name="TagsListGrid" Grid.Row="3">
+                <Grid x:Name="TagsListGrid" Grid.Row="3" Visibility="Collapsed">
                     <ListView ItemsSource="{x:Bind TagsCollection}" IsItemClickEnabled="False" SelectionMode="None"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" 
                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled"
@@ -798,11 +795,9 @@
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:TagsSearchViewModel">
                                 <Grid Height="108" Width="196" CornerRadius="4" Background="#F9F9F9" Margin="-8,4,-8,12">
-                                    <Image Stretch="UniformToFill" Width="196" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image.Source>
-                                            <BitmapImage UriSource="{x:Bind Cover}" DecodePixelType="Logical" DecodePixelWidth="298"/>
-                                        </Image.Source>
-                                    </Image>
+                                    <controls:ImageEx  Stretch="UniformToFill" Width="196" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       IsCacheEnabled="False" Background="#F4F5F8" Source="{x:Bind ImageSource}"
+                                                       PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png"/>
                                     <Grid Background="#60000000">
                                         <TextBlock Text="{x:Bind TagName}" Foreground="White" TextTrimming="CharacterEllipsis" FontSize="14" 
                                                HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0"/>
@@ -813,11 +808,11 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Grid>
-                <Grid x:Name="PostsTitleGrid" Grid.Row="4" HorizontalAlignment="Left">
+                <Grid x:Name="PostsTitleGrid" Grid.Row="4" HorizontalAlignment="Left" Visibility="Collapsed">
                     <Line Stroke="#C99A05" HorizontalAlignment="Center" VerticalAlignment="Center" StrokeThickness="14" X2="56" StrokeDashArray="0.05 0.15" Margin="12,16,0,0"/>
                     <TextBlock Text="作  品" FontSize="16"/>
                 </Grid>
-                <Grid x:Name="PostsListGrid" Grid.Row="5">
+                <Grid x:Name="PostsListGrid" Grid.Row="5" Visibility="Collapsed">
                     <ListView ItemsSource="{x:Bind PostsCollection}" IsItemClickEnabled="False" SelectionMode="None"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" 
                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled"
@@ -830,11 +825,9 @@
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodels:PostsSearchViewModel">
                                 <Grid Height="196" CornerRadius="2" Background="#F9F9F9" Margin="-8,4,-8,12">
-                                    <controls:ImageEx Stretch="UniformToFill" Height="196" Width="auto" IsCacheEnabled="True" CornerRadius="2" Background="#8C222222" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <controls:ImageEx.Source>
-                                            <BitmapImage UriSource="{x:Bind Cover}" DecodePixelType="Logical" DecodePixelHeight="196"/>
-                                        </controls:ImageEx.Source>
-                                    </controls:ImageEx>
+                                    <controls:ImageEx Stretch="UniformToFill" Height="196" Width="auto" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                      IsCacheEnabled="False" Background="#F4F5F8" CornerRadius="2" Source="{x:Bind ImageSource}"
+                                                      PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png"/>
                                     <controls:DropShadowPanel Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,3" BlurRadius="4" ShadowOpacity="1" OffsetX="2" OffsetY="0.3">
                                         <TextBlock Text="{x:Bind Count, Converter={StaticResource vtInt2Str}}" CharacterSpacing="96" Foreground="White" FontWeight="Medium" FontSize="12" Margin="2,0"/>
                                     </controls:DropShadowPanel>

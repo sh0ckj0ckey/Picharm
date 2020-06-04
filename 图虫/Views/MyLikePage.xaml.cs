@@ -5,6 +5,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using 图虫.Helpers;
 using 图虫.ViewModels;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -36,19 +37,31 @@ namespace 图虫.Views
 
         private string beforeTimestamp = "";
 
+        // 这个页面似乎不需要停止加载
+        // private bool _emergencyStop = false;
+
         public MyLikePage()
         {
             this.InitializeComponent();
-            GetLike();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter.GetType().Equals(typeof(BitmapImage)))
+            try
             {
-                this.ViewModel.Avatar = (BitmapImage)e.Parameter;
+                if (e.Parameter.GetType().Equals(typeof(BitmapImage)))
+                {
+                    this.ViewModel.Avatar = (BitmapImage)e.Parameter;
+                }
+                if (MsgBus.Instance.ShouldRefreshMyLike)
+                {
+                    ViewModel.ResetData();
+                    beforeTimestamp = "";
+                    MsgBus.Instance.ShouldRefreshMyLike = false;
+                    GetLike();
+                }
             }
-
+            catch { }
             base.OnNavigatedTo(e);
         }
 
@@ -56,16 +69,21 @@ namespace 图虫.Views
         {
             if (this.Frame.CanGoBack)
             {
+                ViewModel.ResetData();
                 this.Frame.GoBack();
             }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            AppBarButton bt = sender as AppBarButton;
-            FeedViewModel para = (FeedViewModel)bt.DataContext;
-            para.ShouldGoBack = true;
-            this.Frame.Navigate(typeof(MorePicturesPage), para);
+            try
+            {
+                AppBarButton bt = sender as AppBarButton;
+                FeedViewModel para = (FeedViewModel)bt.DataContext;
+                para.ShouldGoBack = true;
+                this.Frame.Navigate(typeof(MorePicturesPage), para);
+            }
+            catch { }
         }
 
         /// <summary>
@@ -82,7 +100,10 @@ namespace 图虫.Views
         {
             try
             {
-                var likeList = await ApiHelper.GetMyLike(LoginHelper.GetUserID(), para);
+                LoadingProgressBar.IsIndeterminate = true;
+                LoadingProgressBar.Visibility = Visibility.Visible;
+
+                var likeList = await TuchongApi.GetMyLike(LoginHelper.GetUserID(), para);
                 if (likeList != null && likeList.result == "SUCCESS")
                 {
                     this.ViewModel.HasMore = likeList.more ? Visibility.Visible : Visibility.Collapsed;
@@ -93,7 +114,9 @@ namespace 图虫.Views
                     {
                         if (item.type == "post")
                         {
-                            this.ViewModel.LikeList.Add(new FeedViewModel(item.entry));
+                            var like = new FeedViewModel(item.entry);
+                            await like.LoadImageAsync(196);
+                            this.ViewModel.LikeList.Add(like);
                         }
                     }
                 }
@@ -108,6 +131,27 @@ namespace 图虫.Views
                 FailedStackPanel.Visibility = Visibility.Visible;
                 MyFollowScrollViewer.Visibility = Visibility.Collapsed;
             }
+            finally
+            {
+                LoadingProgressBar.IsIndeterminate = false;
+                LoadingProgressBar.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        /// <summary>
+        /// 刷新
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ViewModel.ResetData();
+                beforeTimestamp = "";
+                GetLike();
+            }
+            catch { }
         }
     }
 }

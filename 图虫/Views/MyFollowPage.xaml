@@ -6,9 +6,14 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    xmlns:model="using:图虫.Models.MyFollow"
+    xmlns:model="using:图虫.Models.MyFollow" 
+    xmlns:convert="using:图虫.Converters"
     mc:Ignorable="d" RequestedTheme="Light"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    NavigationCacheMode="Required">
+    <Page.Resources>
+        <convert:BoolToVisibility x:Key="vtBool2Visibility"/>
+    </Page.Resources>
     <Page.Transitions>
         <TransitionCollection>
             <NavigationThemeTransition/>
@@ -34,6 +39,15 @@
             </controls:DropShadowPanel>
             <TextBlock VerticalAlignment="Center" Text="我的关注" FontSize="32" FontWeight="Bold" CharacterSpacing="96" Margin="16,0"/>
         </StackPanel>
+        <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,32,0" Height="36" Width="96" CornerRadius="18"
+                BorderBrush="{ThemeResource SystemControlBackgroundAccentBrush}" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" Background="Transparent" BorderThickness="2" Click="Button_Click">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock Text="刷新数据" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+            </Button.Content>
+        </Button>
         <ScrollViewer x:Name="MyFollowScrollViewer" Grid.Row="1" Visibility="Visible">
             <StackPanel Orientation="Vertical">
                 <ListView x:Name="FollowListView" Margin="16,0,16,12" ItemsSource="{x:Bind ViewModel.FollowsList}" 
@@ -55,6 +69,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Ellipse Height="48" Width="48" HorizontalAlignment="Left" VerticalAlignment="Center"
                                      Margin="12,0,16,0" StrokeThickness="0">
@@ -70,11 +85,12 @@
                                     <TextBlock Text="{x:Bind name}" TextTrimming="CharacterEllipsis" FontSize="16" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,2"/>
                                     <TextBlock Text="{x:Bind description}" FontSize="12" Foreground="#666666" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                                 </StackPanel>
-                                <AppBarButton Grid.ColumnSpan="2" Height="76" Width="auto" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Click="AppBarButton_Click_1"/>
+                                <AppBarButton Grid.ColumnSpan="3" Height="76" Width="auto" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Click="AppBarButton_Click_1"/>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+                <ProgressBar x:Name="LoadingProgressBar" Width="auto" HorizontalAlignment="Stretch" IsIndeterminate="False" Background="Transparent"/>
                 <Button x:Name="LoadMoreButton" Content="加载更多" Visibility="{x:Bind ViewModel.HasMore,Mode=OneWay}" Click="LoadMoreButton_Click" FontSize="16" Margin="0,16,0,32" HorizontalAlignment="Center" FontWeight="Bold" Style="{StaticResource TextBlockButtonStyle}"/>
                 <Image x:Name="EndImage" Visibility="{x:Bind ViewModel.End,Mode=OneWay}" Source="/Assets/Icons/end.png" Height="48" Margin="0,16,0,32"/>
             </StackPanel>

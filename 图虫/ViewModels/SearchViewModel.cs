@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Xaml.Media.Imaging;
+using 图虫.Helpers;
 
 namespace 图虫.ViewModels
 {
@@ -14,6 +16,15 @@ namespace 图虫.ViewModels
         public string Intro { get; set; }
         public string Bio { get; set; }
         public string Id { get; set; }
+
+        public BitmapImage ImageSource { get; set; }
+
+        public async Task LoadImageAsync(int decodeWidth = 298)
+        {
+            ImageSource = await ImageLoader.LoadImageAsync(Background);
+            ImageSource.DecodePixelType = DecodePixelType.Logical;
+            ImageSource.DecodePixelWidth = decodeWidth;
+        }
 
         public SitesSearchViewModel(Models.SitesSearchResult.Site_List site)
         {
@@ -55,6 +66,15 @@ namespace 图虫.ViewModels
         public string Cover { get; set; }
         public string Url { get; set; }
 
+        public BitmapImage ImageSource { get; set; }
+
+        public async Task LoadImageAsync(int decodeWidth = 298)
+        {
+            ImageSource = await ImageLoader.LoadImageAsync(Cover);
+            ImageSource.DecodePixelType = DecodePixelType.Logical;
+            ImageSource.DecodePixelWidth = decodeWidth;
+        }
+
         public TagsSearchViewModel(Models.TagsSearchResult.Tag_List tag)
         {
             this.TagName = tag.tag_name;
@@ -72,6 +92,15 @@ namespace 图虫.ViewModels
         public string AuthorId { get; set; }
         public string PostId { get; set; }
         public Models.PostsSearchResult.Post_List PostRaw { get; set; }
+
+        public BitmapImage ImageSource { get; set; }
+
+        public async Task LoadImageAsync(int decodeHeight = 196)
+        {
+            ImageSource = await ImageLoader.LoadImageAsync(Cover);
+            ImageSource.DecodePixelType = DecodePixelType.Logical;
+            ImageSource.DecodePixelHeight = decodeHeight;
+        }
 
         public PostsSearchViewModel(Models.PostsSearchResult.Post_List post)
         {

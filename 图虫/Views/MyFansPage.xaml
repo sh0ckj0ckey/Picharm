@@ -8,7 +8,8 @@
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:model="using:图虫.Models.MyFans"
     mc:Ignorable="d" RequestedTheme="Light"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    NavigationCacheMode="Required">
     <Page.Transitions>
         <TransitionCollection>
             <NavigationThemeTransition/>
@@ -34,6 +35,15 @@
             </controls:DropShadowPanel>
             <TextBlock VerticalAlignment="Center" Text="我的粉丝" FontSize="32" FontWeight="Bold" CharacterSpacing="96" Margin="16,0"/>
         </StackPanel>
+        <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,32,0" Height="36" Width="96" CornerRadius="18"
+                BorderBrush="{ThemeResource SystemControlBackgroundAccentBrush}" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" Background="Transparent" BorderThickness="2" Click="Button_Click">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock Text="刷新数据" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+            </Button.Content>
+        </Button>
         <ScrollViewer x:Name="MyFansScrollViewer" Grid.Row="1" Visibility="Visible">
             <StackPanel Orientation="Vertical">
                 <ListView x:Name="FollowListView" Margin="16,0,16,12" ItemsSource="{x:Bind ViewModel.FansList}" 
@@ -75,6 +85,7 @@
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+                <ProgressBar x:Name="LoadingProgressBar" Width="auto" HorizontalAlignment="Stretch" IsIndeterminate="False" Background="Transparent"/>
                 <Button x:Name="LoadMoreButton" Content="加载更多" Visibility="{x:Bind ViewModel.HasMore,Mode=OneWay}" Click="LoadMoreButton_Click" FontSize="16" Margin="0,16,0,32" HorizontalAlignment="Center" FontWeight="Bold" Style="{StaticResource TextBlockButtonStyle}"/>
                 <Image x:Name="EndImage" Visibility="{x:Bind ViewModel.End,Mode=OneWay}" Source="/Assets/Icons/end.png" Height="48" Margin="0,16,0,32"/>
             </StackPanel>

@@ -69,5 +69,20 @@ namespace 图虫
         {
             AccountTextBox.Focus(FocusState.Keyboard);
         }
+
+        private void PasswordPasswordBox_PreviewKeyUp(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
+        {
+            if (LoginButton.IsEnabled)
+            {
+                e.Handled = true;
+                if (e.Key == Windows.System.VirtualKey.Enter)
+                {
+                    LoginHelper.SetAccount(AccountTextBox.Text.Trim());
+                    LoginHelper.SetPassword(PasswordPasswordBox.Password.Trim());
+                    LoginHelper.HaveInfo = false;
+                    this.Frame.Navigate(typeof(LoginPage));
+                }
+            }
+        }
     }
 }

@@ -9,9 +9,11 @@
     xmlns:viewmodel="using:图虫" 
     xmlns:vt="using:图虫.Converters"
     mc:Ignorable="d" RequestedTheme="Light"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    NavigationCacheMode="Required">
     <Page.Resources>
         <vt:IntToString x:Key="vtInt2Str"/>
+        <vt:StringLengthToVisibility x:Key="vtStr2Vis"/>
     </Page.Resources>
     <Page.Transitions>
         <TransitionCollection>
@@ -38,46 +40,54 @@
             </controls:DropShadowPanel>
             <TextBlock VerticalAlignment="Center" Text="我的喜欢" FontSize="32" FontWeight="Bold" CharacterSpacing="96" Margin="16,0"/>
         </StackPanel>
+        <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,32,0" Height="36" Width="96" CornerRadius="18"
+                BorderBrush="{ThemeResource SystemControlBackgroundAccentBrush}" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" Background="Transparent" BorderThickness="2" Click="Button_Click_1">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    <TextBlock Text="刷新数据" Foreground="{ThemeResource SystemControlBackgroundAccentBrush}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+            </Button.Content>
+        </Button>
         <ScrollViewer x:Name="MyFollowScrollViewer" Grid.Row="1" Visibility="Visible">
             <StackPanel Orientation="Vertical">
-                <ListView x:Name="FollowListView" Margin="16,0,16,12" ItemsSource="{x:Bind ViewModel.LikeList}" 
+                <GridView x:Name="FollowListView" Margin="16,0,16,12" ItemsSource="{x:Bind ViewModel.LikeList}" 
                           IsItemClickEnabled="False" SelectionMode="None">
-                    <ListView.Template>
+                    <GridView.Template>
                         <ControlTemplate>
-                            <ItemsPresenter />
+                            <ItemsPresenter/>
                         </ControlTemplate>
-                    </ListView.Template>
-                    <ListView.ItemsPanel>
+                    </GridView.Template>
+                    <GridView.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <controls:WrapPanel/>
+                            <controls:StaggeredPanel DesiredColumnWidth="200" HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                    <ListView.ItemTemplate>
+                    </GridView.ItemsPanel>
+                    <GridView.ItemTemplate>
                         <DataTemplate x:DataType="viewmodel:FeedViewModel">
-                            <Grid Height="196" Width="auto" CornerRadius="4" Background="#CCF4F5F8" Margin="-8,4">
-                                <controls:ImageEx Height="196" Width="auto" MinWidth="96" IsCacheEnabled="True" Background="#8C222222" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <controls:ImageEx.Source>
-                                        <BitmapImage UriSource="{x:Bind FirstPicUrl}" DecodePixelType="Logical" DecodePixelHeight="196"/>
-                                    </controls:ImageEx.Source>
-                                </controls:ImageEx>
+                            <Grid Height="auto" Width="196" CornerRadius="4" Background="#F4F5F8">
+                                <controls:ImageEx Height="auto" Width="196" IsCacheEnabled="False" Background="#F4F5F8"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="UniformToFill"
+                                                  PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png" Source="{x:Bind FirstPic}"/>
                                 <controls:DropShadowPanel Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,3" BlurRadius="4" ShadowOpacity="1" OffsetX="2" OffsetY="0.3">
                                     <TextBlock Text="{x:Bind PicsCount, Converter={StaticResource vtInt2Str}}" CharacterSpacing="96" Foreground="White" FontWeight="Medium" FontSize="12" Margin="2,0"/>
                                 </controls:DropShadowPanel>
-                                <Grid Height="196" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                <Grid Width="196" Height="64" VerticalAlignment="Top" HorizontalAlignment="Stretch" Visibility="{x:Bind Title,Converter={StaticResource vtStr2Vis}}">
                                     <Grid.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1" Opacity="0.3">
                                             <GradientStop Offset="0.0" Color="#EE000000"/>
-                                            <GradientStop Offset="0.05" Color="#BB000000"/>
-                                            <GradientStop Offset="0.3" Color="Transparent"/>
+                                            <GradientStop Offset="0.3" Color="#B0000000"/>
+                                            <GradientStop Offset="1" Color="Transparent"/>
                                         </LinearGradientBrush>
                                     </Grid.Background>
                                     <TextBlock Text="{x:Bind Title}" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White" Margin="8,4,4,0" TextTrimming="CharacterEllipsis"/>
-                                    <AppBarButton Height="196" Width="auto" ToolTipService.ToolTip="{x:Bind Title}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Click="Button_Click"/>
                                 </Grid>
+                                <AppBarButton Width="196" Height="auto" ToolTipService.ToolTip="{x:Bind Title}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Click="Button_Click"/>
                             </Grid>
                         </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </GridView.ItemTemplate>
+                </GridView>
+                <ProgressBar x:Name="LoadingProgressBar" Width="auto" HorizontalAlignment="Stretch" IsIndeterminate="False" Background="Transparent"/>
                 <Button x:Name="LoadMoreButton" Content="加载更多" Visibility="{x:Bind ViewModel.HasMore,Mode=OneWay}" Click="LoadMoreButton_Click" FontSize="16" Margin="0,16,0,32" HorizontalAlignment="Center" FontWeight="Bold" Style="{StaticResource TextBlockButtonStyle}"/>
                 <Image x:Name="EndImage" Visibility="{x:Bind ViewModel.End,Mode=OneWay}" Source="/Assets/Icons/end.png" Height="48" Margin="0,16,0,32"/>
             </StackPanel>

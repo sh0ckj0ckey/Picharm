@@ -93,7 +93,7 @@ namespace 图虫.ViewModels
         {
             this.ID = info.site.site_id;
             this.Name = info.site.name;
-            this.Location = info.site.user_location.Length == 0 ? "火星" : info.site.user_location;
+            this.Location = (info.site.user_location == null || info.site.user_location.Length == 0) ? "火星" : info.site.user_location;
             this.Followers = info.site.followers;
             this.Following = info.site.following;
             this.Description = info.site.intro;

@@ -231,6 +231,7 @@ namespace XAMLHtml
                     Stretch = Stretch.Uniform,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(0,4,4,0)
                 };
 
                 if (sourceWidth != null || sourceHeight != null)

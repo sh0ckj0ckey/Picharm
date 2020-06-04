@@ -1,10 +1,14 @@
-﻿using System;
+﻿using Microsoft.Toolkit.Extensions;
+using System;
+using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Background;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using 图虫.Helpers;
 
 namespace 图虫
 {
@@ -22,6 +26,7 @@ namespace 图虫
             this.InitializeComponent();
             this.Suspending += OnSuspending;
             this.UnhandledException += OnUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
         private const string taskName = "LiveTileTask";
@@ -59,10 +64,10 @@ namespace 图虫
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Frame rootFrame = Window.Current.Content as Frame;
-
+            RegisterExceptionHandlingSynchronizationContext();
             RegisterBackgroundTask();
 
+            Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
@@ -96,6 +101,12 @@ namespace 图虫
             }
         }
 
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            RegisterExceptionHandlingSynchronizationContext();
+            base.OnActivated(args);
+        }
+
         /// <summary>
         /// Invoked when Navigation to a certain page fails
         /// </summary>
@@ -123,6 +134,29 @@ namespace 图虫
         private void OnUnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             e.Handled = true;
+            Debug.WriteLine("Exception Message: " + e.Message);
+            Debug.WriteLine("Instance caused this exception: " + e.Exception.InnerException);
+            Debug.WriteLine("\n stack trace: " + e.Exception.StackTrace);
+            DialogShower.ShowDialog("Exception Message:", "Instance caused this exception: " + e.Exception.InnerException + "\n stack trace: " + e.Exception.StackTrace);
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, System.UnhandledExceptionEventArgs e)
+        {
+            // 后台线程异常，执行到这里的应用就会闪退
+            // 但是我不知道怎么阻止闪退...
+            DialogShower.ShowDialog("异步操作发生了异常", e.ExceptionObject.ToSafeString());
+        }
+
+        private void RegisterExceptionHandlingSynchronizationContext()
+        {
+            Helpers.ExceptionHandlingSynchronizationContext.Register().UnhandledException += SynchronizationContext_UnhandledException;
+        }
+
+        private void SynchronizationContext_UnhandledException(object sender, Helpers.AysncUnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+            Debug.WriteLine("Synchronization Context Unhandled Exception:\r\n" + e.Exception.Message);
+            DialogShower.ShowDialog("应用程序遇到了异常", e.Exception.Message);
         }
     }
 }

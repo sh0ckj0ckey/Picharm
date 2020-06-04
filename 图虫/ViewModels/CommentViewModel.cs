@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.Toolkit.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace 图虫
@@ -30,7 +32,12 @@ namespace 图虫
 
                 if (commentlist.images.Length > 0)
                 {
-                    this.CommentContent += "[图片评论]";
+                    this.CommentContent += "<br/>";
+                    foreach (var item in commentlist.images)
+                    {
+                        Match match = Regex.Match(item.ToSafeString().Replace(" ", ""), "\\\"t\\\":\\\"([\\s\\S]*?)\\\",");
+                        this.CommentContent += "<img src=\"" + match.Groups[1].Value + "\"></img>";
+                    }
                 }
 
                 this.Replies = new ObservableCollection<ReplyComment>();

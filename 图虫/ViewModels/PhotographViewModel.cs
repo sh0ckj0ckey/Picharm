@@ -20,6 +20,8 @@ namespace 图虫.ViewModels
         public string PostID { get; set; }
         public string FirstPicUrl { get; set; }
         public int PicsCount { get; set; }
+        public string Description { get; set; }
+        public double LikeCount { get; set; } = 0;
         public Visibility HasTags { get; set; }
 
         private Visibility _isFavorite = Visibility.Collapsed;
@@ -38,7 +40,7 @@ namespace 图虫.ViewModels
 
         public ObservableCollection<string> Tags { get; set; }
         public bool InfoComplete { get; set; }
-        public ObservableCollection<string> Pictures { get; set; }
+        public ObservableCollection<AsyncBitmapImage> Pictures { get; set; }
         public List<string> PicturesDesc { get; set; }
         public List<string> PicturesTitle { get; set; }
         public List<string> PicturesID { get; set; }
@@ -70,18 +72,20 @@ namespace 图虫.ViewModels
                     }
                 }
                 catch { }
+                this.Description = postlist.excerpt;
                 this.HasTags = (postlist.tags.Length == 0) ? Visibility.Collapsed : Visibility.Visible;
-                this.Pictures = new ObservableCollection<string>();
+                this.Pictures = new ObservableCollection<AsyncBitmapImage>();
                 this.PicturesDesc = new List<string>();
                 this.PicturesTitle = new List<string>();
                 this.PicturesID = new List<string>();
                 this.isFavorite = postlist.is_favorite ? Visibility.Visible : Visibility.Collapsed;
                 this.isFollowing = postlist.site.is_following;
+                this.LikeCount = postlist.favorites;
                 try
                 {
                     foreach (var item in postlist.images)
                     {
-                        this.Pictures.Add("https://photo.tuchong.com/" + postlist.images[0].user_id + "/f/" + item.img_id + ".jpg");
+                        this.Pictures.Add(new AsyncBitmapImage() { ImageUri = "https://photo.tuchong.com/" + postlist.images[0].user_id + "/f/" + item.img_id + ".jpg" });
                         this.PicturesDesc.Add("");
                         this.PicturesTitle.Add(item.title);
                         this.PicturesID.Add(item.img_id);

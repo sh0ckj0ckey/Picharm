@@ -7,7 +7,24 @@ namespace 图虫
     public static class LoginHelper
     {
         public static ApplicationDataContainer AccountContainer = ApplicationData.Current.LocalSettings;
-        public static string UserCookie = "";
+        public static string UserCookie
+        {
+            set
+            {
+                AccountContainer.Values["cookie"] = value;
+            }
+            get
+            {
+                if (AccountContainer.Values["cookie"] == null || AccountContainer.Values["cookie"].ToString() == "")
+                {
+                    return "";
+                }
+                else
+                {
+                    return AccountContainer.Values["cookie"].ToString();
+                }
+            }
+        }
 
         /// <summary>
         /// Token，从 UserCookie 中取

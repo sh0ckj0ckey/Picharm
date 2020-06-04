@@ -96,31 +96,30 @@
         </Grid>
         <ScrollViewer Grid.Row="1">
             <StackPanel>
-                <TextBlock Text="TA 的作品" FontSize="16" FontWeight="Bold" Margin="16,8"/>
-                <ListView x:Name="PicturesListView" Margin="12,0,8,12" ItemsSource="{x:Bind PhotographObservableCollection}" IsItemClickEnabled="True" SelectionMode="Single" SelectionChanged="PicturesListView_SelectionChanged">
-                    <ListView.Template>
+                <!--<TextBlock Text="TA 的作品" FontSize="16" FontWeight="Bold" Margin="16,8"/>-->
+                <GridView x:Name="PicturesListView" Margin="12,32" ItemsSource="{x:Bind PhotographObservableCollection}" IsItemClickEnabled="True" SelectionMode="Single" SelectionChanged="PicturesListView_SelectionChanged">
+                    <GridView.Template>
                         <ControlTemplate>
                             <ItemsPresenter />
                         </ControlTemplate>
-                    </ListView.Template>
-                    <ListView.ItemsPanel>
+                    </GridView.Template>
+                    <GridView.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <controls:WrapPanel/>
+                            <controls:StaggeredPanel DesiredColumnWidth="196" HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                    <ListView.ItemTemplate>
+                    </GridView.ItemsPanel>
+                    <GridView.ItemTemplate>
                         <DataTemplate x:DataType="local:AllPhotographViewModel">
-                            <Grid Height="156" Width="auto" MinWidth="96" Margin="-8,4" m_helper:VisualHelper.Clip="0,0,0,0">
-                                <Image m_helper:VisualHelper.CenterPoint="Bind" 
-                                       m_helper:ImplicitHelper.Targets="Offset,Scale"
-                                       m_helper:ImplicitHelper.Duration="0:0:0.46"
-                                       PointerEntered="Image_PointerEntered"
-                                       PointerExited="Image_PointerExited"
-                                       Stretch="Uniform">
-                                    <Image.Source>
-                                        <BitmapImage UriSource="{x:Bind Cover}" DecodePixelType="Logical" DecodePixelHeight="156"/>
-                                    </Image.Source>
-                                </Image>
+                            <Grid Height="auto" Width="196" m_helper:VisualHelper.Clip="0,0,0,0">
+                                <controls:ImageEx Height="auto" Width="196" IsCacheEnabled="False" Background="#F4F5F8" 
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="UniformToFill"
+                                                  PlaceholderStretch="None" PlaceholderSource="/Assets/Icons/placeholder.png"
+                                                  m_helper:VisualHelper.CenterPoint="Bind" 
+                                                  m_helper:ImplicitHelper.Targets="Offset,Scale"
+                                                  m_helper:ImplicitHelper.Duration="0:0:0.46"
+                                                  PointerEntered="Image_PointerEntered"
+                                                  PointerExited="Image_PointerExited"
+                                                  Source="{x:Bind ImageSource}"/>
                                 <Grid Height="32" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
                                     <controls:DropShadowPanel Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,3" BlurRadius="4" ShadowOpacity="1" OffsetX="2" OffsetY="0.3">
                                         <TextBlock Text="{x:Bind Count, Converter={StaticResource vtInt2Str}}" CharacterSpacing="96" Foreground="White" FontWeight="Medium" FontSize="12" Margin="2,0"/>
@@ -128,8 +127,8 @@
                                 </Grid>
                             </Grid>
                         </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    </GridView.ItemTemplate>
+                </GridView>
                 <Button x:Name="LoadmoreButton" Visibility="Visible" Content="加载更多" Click="Button_Click_1" FontSize="16" HorizontalAlignment="Center" Margin="0,16" FontWeight="Bold" Style="{StaticResource TextBlockButtonStyle}"/>
                 <Image x:Name="EndImage" Visibility="Collapsed" Source="/Assets/Icons/end.png" Height="48" Margin="0,16,0,32"/>
             </StackPanel>

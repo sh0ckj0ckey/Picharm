@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Toolkit.Uwp.UI.Controls;
+using System;
 using System.Collections.ObjectModel;
 using Windows.System;
 using Windows.UI;
@@ -6,7 +7,9 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using 图虫.Helpers;
 using 图虫.ViewModels;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -25,24 +28,35 @@ namespace 图虫
         double pressX = 0;
         double pressY = 0;
         ObservableCollection<ImageExifViewModel> imageExifViewModels = new ObservableCollection<ImageExifViewModel>();
+        ObservableCollection<AsyncBitmapImage> allPictures = new ObservableCollection<AsyncBitmapImage>();
 
         bool isCtrlPressed = false;
 
+        bool _emergencyStop = false;
+
+        int _loadedCount = 0;
         public ImageDetailPage()
         {
             this.InitializeComponent();
             DetailPage.Focus(FocusState.Keyboard);
-            DetailPage.KeyDown += (sender, e) =>
+            try
             {
-                isCtrlPressed = (e.Key == VirtualKey.Control);
-            };
-            DetailPage.KeyUp += (sender, e) =>
-            {
-                if (e.Key == VirtualKey.Control)
+                DetailPage.KeyDown += (sender, e) =>
                 {
-                    isCtrlPressed = false;
-                }
-            };
+                    isCtrlPressed = (e.Key == VirtualKey.Control);
+                };
+                DetailPage.KeyUp += (sender, e) =>
+                {
+                    if (e.Key == VirtualKey.Control)
+                    {
+                        isCtrlPressed = false;
+                    }
+                };
+            }
+            catch
+            {
+                DialogShower.ShowDialog("注册按键监听失败，Ctrl相关快捷键将失效，重启应用可能会解决。");
+            }
             if (MainPage.SettingContainer.Values["knowthetip"] == null || MainPage.SettingContainer.Values["knowthetip"].ToString() == "false")
             {
                 TipStackPanel.Visibility = Visibility.Visible;
@@ -53,24 +67,33 @@ namespace 图虫
             }
         }
 
-        // 订阅按下和抬起按键的事件
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (e.Parameter.GetType().Equals(typeof(FeedViewModel)))
+            try
             {
-                Window.Current.CoreWindow.KeyDown += CoreWindowKeyDown;
-                Window.Current.CoreWindow.KeyUp += CoreWindowKeyUp;
-
-                oneFeed = (FeedViewModel)e.Parameter;
-                if (oneFeed.ReadingIndex >= 0)
+                if (e.Parameter.GetType().Equals(typeof(FeedViewModel)))
                 {
-                    AllPicturesListView.SelectedIndex = oneFeed.ReadingIndex;
+                    try
+                    {
+                        // 订阅按下和抬起按键的事件
+                        Window.Current.CoreWindow.KeyDown += CoreWindowKeyDown;
+                        Window.Current.CoreWindow.KeyUp += CoreWindowKeyUp;
+                    }
+                    catch
+                    {
+                        DialogShower.ShowDialog("注册按键监听失败，Ctrl相关快捷键将失效，重启应用可能会解决。");
+                    }
+                    oneFeed = (FeedViewModel)e.Parameter;
+                    _emergencyStop = false;
+                    _loadedCount = 0;
+                    LoadPictures();
+                }
+                else
+                {
+                    this.Frame.GoBack();
                 }
             }
-            else
-            {
-                this.Frame.GoBack();
-            }
+            catch { }
         }
 
         // 离开当前页面前取消订阅事件
@@ -78,14 +101,56 @@ namespace 图虫
         {
             try
             {
-                Window.Current.CoreWindow.KeyDown -= CoreWindowKeyDown;
+                _emergencyStop = true;
+                try
+                {
+                    Window.Current.CoreWindow.KeyDown -= CoreWindowKeyDown;
+                }
+                catch { }
+                try
+                {
+                    Window.Current.CoreWindow.KeyUp -= CoreWindowKeyUp;
+                }
+                catch { }
+
+                // 把可能开启夜间模式后导致的右上角三个键改回黑色字体
+                var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+                titleBar.ButtonForegroundColor = Colors.Black;
+
+                allPictures.Clear();
+                GC.Collect();
             }
             catch { }
+        }
+
+        private async void LoadPictures()
+        {
             try
             {
-                Window.Current.CoreWindow.KeyUp -= CoreWindowKeyUp;
+                LoadingProgressRing.IsActive = true;
+                LoadingGrid.Visibility = Visibility.Visible;
+                foreach (var item in oneFeed.Pictures)
+                {
+                    if (_emergencyStop)
+                    {
+                        break;
+                    }
+                    await item.LoadImageAsync(96);
+                    allPictures.Add(item);
+                    _loadedCount++;
+                    LoadingTextBlock.Text = "正在加载缩略图(" + _loadedCount + "/" + oneFeed.PicsCount + ")";
+                }
+                if (oneFeed.ReadingIndex >= 0 && CarouselControl.SelectedIndex < 0)
+                {
+                    CarouselControl.SelectedIndex = oneFeed.ReadingIndex;
+                }
+                LoadingProgressRing.IsActive = false;
+                LoadingGrid.Visibility = Visibility.Collapsed;
             }
-            catch { }
+            catch (Exception e)
+            {
+                DialogShower.ShowDialog("缩略图加载失败", e.Message);
+            }
         }
 
         // 按下Ctrl时设置isCtrlPressed为true
@@ -110,8 +175,6 @@ namespace 图虫
         /// <param name="e"></param>
         private void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
-            var titleBar = ApplicationView.GetForCurrentView().TitleBar;
-            titleBar.ButtonForegroundColor = Colors.Black;
             if (this.Frame.CanGoBack)
             {
                 this.Frame.GoBack();
@@ -153,8 +216,12 @@ namespace 图虫
             DataGrid.Visibility = Visibility.Visible;
             DataGridPopIn.Begin();
             TitleTextBlock.Text = "图片编号：" + oneFeed.PicturesID[PageIndex];
-            imageExifViewModels = await ApiHelper.GetImageExif(oneFeed.PicturesID[0]);
-            ExifListView.ItemsSource = imageExifViewModels;
+            try
+            {
+                imageExifViewModels = await TuchongApi.GetImageExif(oneFeed.PicturesID[0]);
+                ExifListView.ItemsSource = imageExifViewModels;
+            }
+            catch { }
         }
 
         private void Rectangle_Tapped(object sender, TappedRoutedEventArgs e)
@@ -224,8 +291,15 @@ namespace 图虫
         /// <param name="e"></param>
         private void AllPicturesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ImageTitleTextBlock.Text = oneFeed.PicturesTitle[AllPicturesListView.SelectedIndex];
-            DetailImage.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri(oneFeed.Pictures[AllPicturesListView.SelectedIndex]));
+            StartSwitchImage.Begin();
+        }
+
+        private void DoubleAnimation_Completed(object sender, object e)
+        {
+            ImageTitleTextBlock.Text = oneFeed.PicturesTitle[CarouselControl.SelectedIndex];
+            // await oneFeed.Pictures[CarouselControl.SelectedIndex].LoadRawImageAsync();
+            DetailImage.Source = new BitmapImage(new Uri(oneFeed.Pictures[CarouselControl.SelectedIndex].ImageUri));
+            EndSwitchImage.Begin();
         }
 
         /// <summary>
@@ -254,38 +328,40 @@ namespace 图虫
             TipStackPanel.Visibility = Visibility.Collapsed;
         }
 
-        private void AllPicturesListView_Loaded(object sender, RoutedEventArgs e)
-        {
-            AllPicturesListView.ScrollIntoView(AllPicturesListView.SelectedItem);
-        }
-
+        /// <summary>
+        /// 滚轮切换图片
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DetailImage_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
-            if (isCtrlPressed)
+            try
             {
-                return;
-            }
-            // 图片不在放大状态时，滚轮切换上下页
-            if (MainImageScroller.ZoomFactor - zoomFactor < 0.1)
-            {
-                int wheel = e.GetCurrentPoint(DetailImage).Properties.MouseWheelDelta;
-                if (wheel > 0)
+                if (isCtrlPressed)
                 {
-                    if (AllPicturesListView.SelectedIndex > 0)
+                    return;
+                }
+                // 图片不在放大状态时，滚轮切换上下页
+                if (MainImageScroller.ZoomFactor - zoomFactor < 0.1)
+                {
+                    int wheel = e.GetCurrentPoint(DetailImage).Properties.MouseWheelDelta;
+                    if (wheel > 0)
                     {
-                        AllPicturesListView.SelectedIndex--;
-                        AllPicturesListView.ScrollIntoView(AllPicturesListView.SelectedItem);
+                        if (CarouselControl.SelectedIndex > 0)
+                        {
+                            CarouselControl.SelectedIndex--;
+                        }
+                    }
+                    else if (wheel < 0)
+                    {
+                        if (CarouselControl.SelectedIndex < oneFeed.Pictures.Count - 1)
+                        {
+                            CarouselControl.SelectedIndex++;
+                        }
                     }
                 }
-                else if (wheel < 0)
-                {
-                    if (AllPicturesListView.SelectedIndex < oneFeed.Pictures.Count - 1)
-                    {
-                        AllPicturesListView.SelectedIndex++;
-                        AllPicturesListView.ScrollIntoView(AllPicturesListView.SelectedItem);
-                    }
-                }
             }
+            catch { }
         }
     }
 }

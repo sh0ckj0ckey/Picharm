@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.UI.Xaml;
@@ -43,108 +45,145 @@ namespace 图虫
             }
         }
 
+        bool _busy = false;
+
         //the count is the number requested
         public IAsyncOperation<LoadMoreItemsResult> LoadMoreItemsAsync(uint count)
         {
-            return AsyncInfo.Run(async cancelToken =>
+            return AsyncInfo.Run((c) => LoadMoreItemsAsync(c, count));
+        }
+
+        private async Task<LoadMoreItemsResult> LoadMoreItemsAsync(CancellationToken c, uint count)
+        {
+            try
             {
                 Models.Feeds.Feed gottenFeeds = null;
-                if (this.feedPageIndex == 1)
+                if (!_busy)
                 {
-                    gottenFeeds = await ApiHelper.GetFeed("page=1&type=refresh");
-                    Loading = Visibility.Collapsed;
-                    isLoading = false;
-                    if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败"))
+                    _busy = true;
+                    if (this.feedPageIndex == 1)
                     {
-                        this.feedPageIndex = 1;
-                        if (gottenFeeds != null)
-                        {
-                            ShowDialog(gottenFeeds.message);
-                        }
-                    }
-                    else if (gottenFeeds.result != "SUCCESS")
-                    {
-                        this.feedPageIndex = 1;
-                        ShowDialog(gottenFeeds.result + ": " + gottenFeeds.message);
-                    }
-                    else
-                    {
-                        HasMoreItems = gottenFeeds.more;
-                        if (gottenFeeds.feedList.Length <= 0)
+                        gottenFeeds = await TuchongApi.GetFeed("page=1&type=refresh");
+                        Loading = Visibility.Collapsed;
+                        isLoading = false;
+                        if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败") || gottenFeeds.result != "SUCCESS")
                         {
                             this.feedPageIndex = 1;
-                        }
-                        else
-                        {
-                            foreach (var feed in gottenFeeds.feedList)
-                            {
-                                FeedViewModel feedViewModel = new FeedViewModel(feed);
-                                if (feedViewModel.InfoComplete)
-                                {
-                                    this.Add(feedViewModel);
-                                }
-
-                                if (feed.entry.post_id != 0)
-                                {
-                                    this.feedPageLastImgID = feed.entry.post_id.ToString();
-                                }
-                                else if (feed.entry.vid != 0)
-                                {
-                                    this.feedPageLastImgID = feed.entry.vid.ToString();
-                                }
-                            }
-                            this.feedPageIndex += 1;
-                        }
-                    }
-                }
-                else
-                {
-                    //add your newly loaded item to the collection
-                    if (this.feedPageLastImgID == null || this.feedPageLastImgID == "")
-                    {
-                        this.feedPageIndex = 1;
-                    }
-                    else
-                    {
-                        gottenFeeds = await ApiHelper.GetFeed("page=" + this.feedPageIndex + "&post_id=" + this.feedPageLastImgID + "&type=loadmore");
-                        if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败"))
-                        {
                             if (gottenFeeds != null)
                             {
-                                ShowDialog(gottenFeeds.message);
+                                ShowDialog(gottenFeeds.result + ": " + gottenFeeds.message);
                             }
                         }
                         else
                         {
                             HasMoreItems = gottenFeeds.more;
-                            if (gottenFeeds.feedList.Length > 0)
+                            if (gottenFeeds.feedList.Length <= 0)
+                            {
+                                this.feedPageIndex = 1;
+                                ShowDialog("没有获取到作品，请刷新重试");
+                            }
+                            else
                             {
                                 foreach (var feed in gottenFeeds.feedList)
                                 {
                                     FeedViewModel feedViewModel = new FeedViewModel(feed);
                                     if (feedViewModel.InfoComplete)
                                     {
+                                        await feedViewModel.LoadImageAsync();
                                         this.Add(feedViewModel);
                                     }
 
-                                    if (feed.entry.post_id != 0)
+                                    if (feed.entry.post_id != null & feed.entry.post_id != "0")
                                     {
                                         this.feedPageLastImgID = feed.entry.post_id.ToString();
                                     }
-                                    else if (feed.entry.vid != 0)
+                                    else if (feed.entry.vid != null & feed.entry.vid != "0")
                                     {
                                         this.feedPageLastImgID = feed.entry.vid.ToString();
+                                    }
+                                    else if (feed.entry.video_id != null & feed.entry.video_id != "0")
+                                    {
+                                        this.feedPageLastImgID = feed.entry.video_id.ToString();
                                     }
                                 }
                                 this.feedPageIndex += 1;
                             }
                         }
                     }
+                    else
+                    {
+                        if (this.feedPageLastImgID == null || this.feedPageLastImgID == "")
+                        {
+                            this.feedPageIndex = 1;
+                        }
+                        else
+                        {
+                            gottenFeeds = await TuchongApi.GetFeed("page=" + this.feedPageIndex + "&post_id=" + this.feedPageLastImgID + "&type=loadmore");
+                            Loading = Visibility.Collapsed;
+                            isLoading = false;
+                            if (gottenFeeds == null || gottenFeeds.message.StartsWith("获取或者解析数据失败") || gottenFeeds.result != "SUCCESS")
+                            {
+                                if (gottenFeeds != null)
+                                {
+                                    ShowDialog(gottenFeeds.result + ": " + gottenFeeds.message);
+                                }
+                            }
+                            else
+                            {
+                                HasMoreItems = gottenFeeds.more;
+                                if (gottenFeeds.feedList.Length > 0)
+                                {
+                                    foreach (var feed in gottenFeeds.feedList)
+                                    {
+                                        FeedViewModel feedViewModel = new FeedViewModel(feed);
+                                        if (feedViewModel.InfoComplete)
+                                        {
+                                            await feedViewModel.LoadImageAsync();
+                                            this.Add(feedViewModel);
+                                        }
+
+                                        if (feed.entry.post_id != null & feed.entry.post_id != "0")
+                                        {
+                                            this.feedPageLastImgID = feed.entry.post_id.ToString();
+                                        }
+                                        else if (feed.entry.vid != null & feed.entry.vid != "0")
+                                        {
+                                            this.feedPageLastImgID = feed.entry.vid.ToString();
+                                        }
+                                        else if (feed.entry.video_id != null & feed.entry.video_id != "0")
+                                        {
+                                            this.feedPageLastImgID = feed.entry.video_id.ToString();
+                                        }
+                                    }
+                                    this.feedPageIndex += 1;
+                                }
+                            }
+                        }
+                    }
                 }
-                Loading = Visibility.Collapsed;
-                isLoading = false;
-                return new LoadMoreItemsResult { Count = count };
-            });
+                return new LoadMoreItemsResult { Count = 0 };
+            }
+            finally
+            {
+                _busy = false;
+            }
+        }
+        /// <summary>
+        /// 刷新
+        /// </summary>
+        public void RefreshData()
+        {
+            if (isLoading)
+            {
+                return;
+            }
+            _busy = false;
+            feedPageIndex = 1;
+            feedPageLastImgID = "";
+            HasMoreItems = true;
+            Loading = Visibility.Visible;
+            isLoading = true;
+            this.ClearItems();
         }
 
         /// <summary>

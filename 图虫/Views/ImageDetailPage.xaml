@@ -9,6 +9,21 @@
       xmlns:viewmodels="using:图虫.ViewModels"
       mc:Ignorable="d" RequestedTheme="Light"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Page.Resources>
+        <Storyboard x:Name="StartSwitchImage">
+            <DoubleAnimation To="0" Duration="00:00:0.3"
+                             Storyboard.TargetName="DetailImage"
+                             Storyboard.TargetProperty="Opacity"
+                             Completed="DoubleAnimation_Completed">
+            </DoubleAnimation>
+        </Storyboard>
+        <Storyboard x:Name="EndSwitchImage">
+            <DoubleAnimation To="1" Duration="00:00:0.3"
+                             Storyboard.TargetName="DetailImage"
+                             Storyboard.TargetProperty="Opacity">
+            </DoubleAnimation>
+        </Storyboard>
+    </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
@@ -55,13 +70,23 @@
                 <Image x:Name="DetailImage" HorizontalAlignment="Center" VerticalAlignment="Center" ImageOpened="DetailImage_ImageOpened" PointerWheelChanged="DetailImage_PointerWheelChanged"/>
             </ScrollViewer>
         </Grid>
+        <Grid x:Name="LoadingGrid" Grid.Row="2" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Height="96" MinWidth="156" CornerRadius="4">
+            <Grid.Background>
+                <AcrylicBrush TintColor="#F4F5F8" TintOpacity="0.7"/>
+            </Grid.Background>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="68"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <ProgressRing x:Name="LoadingProgressRing" Height="36" Width="36" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="False"/>
+            <TextBlock x:Name="LoadingTextBlock" Grid.Row="1" Margin="4,0" Text="正在加载缩略图" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+        </Grid>
         <Grid Grid.Row="3">
             <Grid Margin="16,0,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="72"/>
+                    <ColumnDefinition Width="64"/>
                     <ColumnDefinition Width="auto"/>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width="16"/>
                 </Grid.ColumnDefinitions>
                 <Ellipse Grid.Column="0" Height="48" Width="48" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Ellipse.Fill>
@@ -69,36 +94,26 @@
                     </Ellipse.Fill>
                 </Ellipse>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{x:Bind oneFeed.UserName}" FontSize="16"/>
-                    <TextBlock Text="{x:Bind oneFeed.UserID}" Opacity="0.7" FontWeight="Light"/>
+                    <TextBlock Text="{x:Bind oneFeed.UserName}" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Text="{x:Bind oneFeed.UserID}" Opacity="0.7" FontWeight="Normal"/>
                 </StackPanel>
                 <Grid Grid.Column="2" Margin="16,0,0,0">
-                    <ListView x:Name="AllPicturesListView" ItemsSource="{x:Bind oneFeed.Pictures}" SelectionMode="Single"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"
-                              ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Disabled"
-                              Margin="64,8,6,4" SelectionChanged="AllPicturesListView_SelectionChanged" Loaded="AllPicturesListView_Loaded">
-                        <ListView.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ListView.ItemsPanel>
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Grid Height="128" Margin="-4,4" CornerRadius="4">
-                                    <Image Stretch="UniformToFill" Height="128" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <Image.Source>
-                                            <BitmapImage UriSource="{x:Bind}" DecodePixelType="Logical" DecodePixelHeight="128"/>
-                                        </Image.Source>
-                                    </Image>
+                    <controls:Carousel x:Name="CarouselControl" InvertPositive="True" ItemDepth="256" ItemMargin="-16"
+                                       ItemRotationX="0" ItemRotationY="0" ItemRotationZ ="0" Orientation="Horizontal"
+                                       ItemsSource="{x:Bind allPictures}" Margin="64,8,6,4" Height="128"
+                                       SelectionChanged="AllPicturesListView_SelectionChanged">
+                        <controls:Carousel.EasingFunction>
+                            <CubicEase EasingMode="EaseOut" />
+                        </controls:Carousel.EasingFunction>
+                        <controls:Carousel.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:AsyncBitmapImage">
+                                <Grid CornerRadius="2" Height="96" Width="96">
+                                    <Image Height="96" Width="96" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" Source="{x:Bind ImageSource}"/>
                                 </Grid>
                             </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                        </controls:Carousel.ItemTemplate>
+                    </controls:Carousel>
                 </Grid>
-                <controls:DropShadowPanel Grid.Column="3" BlurRadius="16" ShadowOpacity="0.8" Margin="-12,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Rectangle Fill="White" Height="128" Width="16"/>
-                </controls:DropShadowPanel>
-                <Grid Grid.Column="3" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="-6,0,0,0"/>
             </Grid>
         </Grid>
         <Grid x:Name="DataGrid" Grid.RowSpan="4" Visibility="Collapsed" Background="#bb000000">
@@ -130,7 +145,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{x:Bind Desc}" FontWeight="Bold" Margin="8" Opacity="0.7" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
                                     <Rectangle Grid.Column="1" Width="1.2" Height="60" Fill="LightGray" Opacity="0.3" RadiusX="4" RadiusY="4"/>
-                                    <TextBlock Grid.Column="2" Text="{x:Bind Content}" FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="8,0,16,0"/>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind Content}"  IsTextSelectionEnabled="True" FontWeight="Medium" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="8,0,16,0"/>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

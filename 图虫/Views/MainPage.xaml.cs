@@ -11,6 +11,9 @@ using Windows.UI.Xaml.Input;
 using System.Text.RegularExpressions;
 using 图虫.ViewModels;
 using 图虫.Helpers;
+using 图虫.Models.Feeds;
+using 图虫.Models.Discover;
+using System.Linq.Expressions;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -32,9 +35,9 @@ namespace 图虫
         public ObservableCollection<string> QuickCommentObservableCollection = new ObservableCollection<string>();
 
         /// <summary>
-        /// 当前分类下图片的页数，第一页是refresh，单独写，所以这个就是从2开始
+        /// 当前分类下图片的页数，第一页是refresh
         /// </summary>
-        public int CategoryPageIndex = 2;
+        public int CategoryPageIndex = 1;
 
         /// <summary>
         /// 用来控制轮播图的计时器
@@ -50,6 +53,9 @@ namespace 图虫
         /// 代表标签的索引，默认是-2，即 “最新”
         /// </summary>
         public int TagIndex = -2;
+
+        // 切换分类时变为true
+        bool _emergencyStop = false;
 
         public MainPage()
         {
@@ -100,29 +106,35 @@ namespace 图虫
         /// </summary>
         public async void GetDisCover()
         {
-            Models.Discover.Discover discover = await ApiHelper.GetDiscover();
-            if (discover == null)
+            try
             {
-                NoteTextBlock.Text = "没能获取 \"分类\" 和 \"发现\"";
-                NoteGrid.Visibility = Visibility.Visible;
-                NoteFirst.Begin();
-                return;
-            }
+                Models.Discover.Discover discover = await TuchongApi.GetDiscover();
+                if (discover == null)
+                {
+                    NoteTextBlock.Text = "没能获取 \"分类\" 和 \"发现\"";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    return;
+                }
 
-            foreach (var item in discover.categories)
-            {
-                TagsObservableCollection.Add(item);
-            }
+                foreach (var item in discover.categories)
+                {
+                    TagsObservableCollection.Add(item);
+                }
 
-            foreach (var item in discover.banners)
-            {
-                BannersObservableCollection.Add(item);
-            }
+                foreach (var item in discover.banners)
+                {
+                    BannersObservableCollection.Add(item);
+                }
 
-            foreach (var item in discover.hotEvents)
-            {
-                HoteventObservableCollection.Add(new HoteventViewModel(item));
+                foreach (var item in discover.hotEvents)
+                {
+                    var hot = new HoteventViewModel(item);
+                    await hot.LoadImageAsync();
+                    HoteventObservableCollection.Add(hot);
+                }
             }
+            catch { }
         }
 
         /// <summary>
@@ -130,20 +142,24 @@ namespace 图虫
         /// </summary>
         public void SetFlipView()
         {
-            int change = 1;
-            timer = new DispatcherTimer
+            try
             {
-                Interval = TimeSpan.FromSeconds(2.3)
-            };
-            timer.Tick += (o, a) =>
-            {
-                int newIndex = BannerFlipView.SelectedIndex + change;
-                if (newIndex >= BannerFlipView.Items.Count || newIndex < 0)
+                int change = 1;
+                timer = new DispatcherTimer
                 {
-                    change *= -1;
-                }
-                BannerFlipView.SelectedIndex += change;
-            };
+                    Interval = TimeSpan.FromSeconds(2.3)
+                };
+                timer.Tick += (o, a) =>
+                {
+                    int newIndex = BannerFlipView.SelectedIndex + change;
+                    if (newIndex >= BannerFlipView.Items.Count || newIndex < 0)
+                    {
+                        change *= -1;
+                    }
+                    BannerFlipView.SelectedIndex += change;
+                };
+            }
+            catch { }
         }
 
         /// 获取 “推荐” 在IncrementalLoadingCollection中实现
@@ -201,34 +217,26 @@ namespace 图虫
         }
 
         /// <summary>
-        /// 显示程序异常对话框
-        /// </summary>
-        public static async void ShowDialog(string content)
-        {
-            var dialog = new ContentDialog()
-            {
-                Title = ":(",
-                Content = content,
-                PrimaryButtonText = "好的",
-                FullSizeDesired = false
-            };
-
-            dialog.PrimaryButtonClick += (_s, _e) => { dialog.Hide(); };
-            try
-            {
-                await dialog.ShowAsync();
-            }
-            catch { }
-        }
-
-        /// <summary>
         /// 刷新
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            this.Frame.Navigate(typeof(MainPage));
+            try
+            {
+                if (HomePagePivot.SelectedIndex == 0)
+                {
+                    FeedsObservableCollection.RefreshData();
+                }
+                else if (HomePagePivot.SelectedIndex == 1)
+                {
+                    CategoryPageIndex = 1;
+                    CategoryGridView.SelectedIndex = -1;
+                    CategoryGridView.SelectedIndex = 0;
+                }
+            }
+            catch { }
         }
 
         /// <summary>
@@ -250,18 +258,26 @@ namespace 图虫
         /// <param name="e"></param>
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            AppBarButton btn = sender as AppBarButton;
-            FeedViewModel oneFeed = (FeedViewModel)btn.DataContext;
-            oneFeed.ShouldGoBack = false;
-            InfoFrame.Navigate(typeof(MorePicturesPage), oneFeed);
+            try
+            {
+                AppBarButton btn = sender as AppBarButton;
+                FeedViewModel oneFeed = (FeedViewModel)btn.DataContext;
+                oneFeed.ShouldGoBack = false;
+                InfoFrame.Navigate(typeof(MorePicturesPage), oneFeed);
+            }
+            catch { }
         }
 
         private void Button_Click_6(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            FeedViewModel oneFeed = (FeedViewModel)btn.DataContext;
-            oneFeed.ShouldGoBack = false;
-            InfoFrame.Navigate(typeof(MorePicturesPage), oneFeed);
+            try
+            {
+                Button btn = sender as Button;
+                FeedViewModel oneFeed = (FeedViewModel)btn.DataContext;
+                oneFeed.ShouldGoBack = false;
+                InfoFrame.Navigate(typeof(MorePicturesPage), oneFeed);
+            }
+            catch { }
         }
 
 
@@ -316,14 +332,29 @@ namespace 图虫
         /// <param name="e"></param>
         private void CategoryGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (CategoryGridView.SelectedIndex >= 0)
+            try
             {
-                CategoryPageIndex = 2;
-                TagIndex = TagsObservableCollection[CategoryGridView.SelectedIndex].tag_id;
-                CategoryLoadingStackPanel.Visibility = Visibility.Visible;
-                CategoryLoadingProgressRing.IsActive = true;
-                InitialCategoryItem(TagIndex);
+                // 检测是否已经登录，控制 “分类” 板块是否可见
+                if (LoginHelper.LoggedIn == true)
+                {
+                    LoadMoreDiscoverButton.Visibility = Visibility.Visible;
+                    NoLoginGrid.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    NoLoginGrid.Visibility = Visibility.Visible;
+                    LoadMoreDiscoverButton.Visibility = Visibility.Collapsed;
+                    return;
+                }
+                if (CategoryGridView.SelectedIndex >= 0)
+                {
+                    CategoryPageIndex = 1;
+                    _emergencyStop = true;
+                    TagIndex = TagsObservableCollection[CategoryGridView.SelectedIndex].tag_id;
+                    InitCategoryItem(TagIndex);
+                }
             }
+            catch { }
         }
 
 
@@ -331,10 +362,12 @@ namespace 图虫
         /// 根据ID获取相关分类的列表，初始化即获取第一页内容
         /// </summary>
         /// <param name="id"></param>
-        public async void InitialCategoryItem(int id)
+        public async void InitCategoryItem(int id)
         {
+            CategoryLoadingProgressRing.IsIndeterminate = true;
             string para = id + "/category?page=1&type=refresh";
-            Models.CategoryItem.CategoryItem categoryItem = await ApiHelper.GetCategoryItem(para);
+            Models.CategoryItem.CategoryItem categoryItem = await TuchongApi.GetCategoryItem(para);
+            CategoryLoadingProgressRing.IsIndeterminate = false;
             if (categoryItem == null)
             {
                 NoteTextBlock.Text = "没能获取 \"分类\" 的数据";
@@ -343,23 +376,34 @@ namespace 图虫
                 return;
             }
             CategoryItemsObservableCollection.Clear();
-            CategoryItemsListView.ItemsSource = null;
+            _emergencyStop = false;
             foreach (var item in categoryItem.post_list)
             {
-                CategoryItemsObservableCollection.Add(new FeedViewModel(item));
+                if (_emergencyStop)
+                {
+                    CategoryItemsObservableCollection.Clear();
+                    _emergencyStop = false;
+                    break;
+                }
+                try
+                {
+                    var cate = new FeedViewModel(item);
+                    await cate.LoadImageAsync();
+                    CategoryItemsObservableCollection.Add(cate);
+                }
+                catch { }
             }
-            CategoryItemsListView.ItemsSource = CategoryItemsObservableCollection;
-            CategoryLoadingStackPanel.Visibility = Visibility.Collapsed;
-            CategoryLoadingProgressRing.IsActive = false;
+            CategoryPageIndex++;
         }
 
         /// <summary>
-        /// 分类中的列表加载更多
+        /// 根据ID获取相关分类的列表，列表加载更多
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private async void Button_Click_2(object sender, RoutedEventArgs e)
         {
+            CategoryLoadingProgressRing.IsIndeterminate = true;
             if (CategoryItemsObservableCollection.Count < 1)
             {
                 NoteTextBlock.Text = "没能获取 \"分类\" 的数据，请尝试刷新";
@@ -368,7 +412,8 @@ namespace 图虫
                 return;
             }
             string para = TagIndex + "/category?post_id=" + CategoryItemsObservableCollection.Last().PostID + "&page=" + CategoryPageIndex + "&type=loadmore";
-            Models.CategoryItem.CategoryItem categoryItem = await ApiHelper.GetCategoryItem(para);
+            Models.CategoryItem.CategoryItem categoryItem = await TuchongApi.GetCategoryItem(para);
+            CategoryLoadingProgressRing.IsIndeterminate = false;
             if (categoryItem == null)
             {
                 NoteTextBlock.Text = "没能获取更多 \"分类\" 的数据";
@@ -378,7 +423,19 @@ namespace 图虫
             }
             foreach (var item in categoryItem.post_list)
             {
-                CategoryItemsObservableCollection.Add(new FeedViewModel(item));
+                if (_emergencyStop)
+                {
+                    CategoryItemsObservableCollection.Clear();
+                    _emergencyStop = false;
+                    break;
+                }
+                try
+                {
+                    var cate = new FeedViewModel(item);
+                    await cate.LoadImageAsync();
+                    CategoryItemsObservableCollection.Add(cate);
+                }
+                catch { }
             }
             CategoryPageIndex++;
         }
@@ -411,6 +468,10 @@ namespace 图虫
         /// <param name="e"></param>
         private void CategoryItemsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (CategoryItemsListView?.SelectedIndex < 0)
+            {
+                return;
+            }
             try
             {
                 FeedViewModel oneFeed = CategoryItemsObservableCollection[CategoryItemsListView.SelectedIndex];
@@ -431,10 +492,10 @@ namespace 图虫
             {
                 BackToTopButton.Visibility = Visibility.Visible;
                 timer.Stop();
+                CategoryItemsListView.SelectedIndex = -1;
             }
             else if (HomePagePivot.SelectedIndex == 1)
             {
-                BackToTopButton.Visibility = Visibility.Collapsed;
                 timer.Stop();
 
                 // 检测是否已经登录，控制 “分类” 板块是否可见
@@ -442,16 +503,21 @@ namespace 图虫
                 {
                     LoadMoreDiscoverButton.Visibility = Visibility.Visible;
                     NoLoginGrid.Visibility = Visibility.Collapsed;
-                    CategoryGridView.SelectedIndex = 0;
                 }
                 else
                 {
                     NoLoginGrid.Visibility = Visibility.Visible;
                     LoadMoreDiscoverButton.Visibility = Visibility.Collapsed;
                 }
+                BackToTopButton.Visibility = Visibility.Collapsed;
+                if (CategoryGridView.SelectedIndex < 0)
+                {
+                    CategoryGridView.SelectedIndex = 0;
+                }
             }
             else if (HomePagePivot.SelectedIndex == 2)
             {
+                CategoryItemsListView.SelectedIndex = -1;
                 BackToTopButton.Visibility = Visibility.Collapsed;
                 timer.Start();
             }
@@ -476,32 +542,36 @@ namespace 图虫
         /// <param name="args"></param>
         void MainPage_DataRequested(Windows.ApplicationModel.DataTransfer.DataTransferManager sender, Windows.ApplicationModel.DataTransfer.DataRequestedEventArgs args)
         {
-            if (ReadingFeed != null)
+            try
             {
-                string descText = "";
-                if (ReadingFeed.Description.Length > 0 && ReadingFeed.Description.Length <= 28)
+                if (ReadingFeed != null)
                 {
-                    descText = ReadingFeed.Description;
-                }
-                else if (ReadingFeed.Description.Length > 28)
-                {
-                    descText = ReadingFeed.Description.Substring(0, 28) + "...";
+                    string descText = "";
+                    if (ReadingFeed.Description.Length > 0 && ReadingFeed.Description.Length <= 28)
+                    {
+                        descText = ReadingFeed.Description;
+                    }
+                    else if (ReadingFeed.Description.Length > 28)
+                    {
+                        descText = ReadingFeed.Description.Substring(0, 28) + "...";
+                    }
+                    else
+                    {
+                        descText = ReadingFeed.UserName + "的作品";
+                    }
+                    descText += "\n";
+                    descText += "https://tuchong.com/" + ReadingFeed.UserID.Substring(4) + "/" + ReadingFeed.PostID + "/";
+                    args.Request.Data.SetText(descText);
+                    args.Request.Data.SetWebLink(new Uri("https://tuchong.com/" + ReadingFeed.UserID.Substring(4) + "/" + ReadingFeed.PostID + "/"));
+                    args.Request.Data.Properties.Title = ReadingFeed.UserName + "的作品";
                 }
                 else
                 {
-                    descText = ReadingFeed.UserName + "的作品";
+                    args.Request.FailWithDisplayText("好像没有东西可以分享");
                 }
-                descText += "\n";
-                descText += "https://tuchong.com/" + ReadingFeed.UserID.Substring(4) + "/" + ReadingFeed.PostID + "/";
-                args.Request.Data.SetText(descText);
-                args.Request.Data.SetWebLink(new Uri("https://tuchong.com/" + ReadingFeed.UserID.Substring(4) + "/" + ReadingFeed.PostID + "/"));
-                args.Request.Data.Properties.Title = ReadingFeed.UserName + "的作品";
+                ReadingFeed = null;
             }
-            else
-            {
-                args.Request.FailWithDisplayText("好像没有东西可以分享");
-            }
-            ReadingFeed = null;
+            catch { }
         }
 
         /// <summary>
@@ -591,7 +661,7 @@ namespace 图虫
         private async void Button_Click_4(object sender, RoutedEventArgs e)
         {
             string commentContent = CommentTextBox.Text;
-            string sent = await ApiHelper.PostComment(ReadingFeed.PostID, commentContent);
+            string sent = await TuchongApi.PostComment(ReadingFeed.PostID, commentContent);
 
             NoteTextBlock.Text = sent;
             NoteGrid.Visibility = Visibility.Visible;
@@ -608,46 +678,53 @@ namespace 图虫
         /// <param name="e"></param>
         private async void LikeAppBarButton_Click(object sender, RoutedEventArgs e)
         {
-            if (LoginHelper.LoggedIn == false)
+            try
             {
-                NoteTextBlock.Text = "需要先登录才可以点赞哦";
-                NoteGrid.Visibility = Visibility.Visible;
-                NoteFirst.Begin();
-                InfoFrame.Navigate(typeof(BeforeLoginPage));
-                return;
-            }
+                if (LoginHelper.LoggedIn == false)
+                {
+                    NoteTextBlock.Text = "需要先登录才可以点赞哦";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    InfoFrame.Navigate(typeof(BeforeLoginPage));
+                    return;
+                }
 
-            AppBarButton btn = sender as AppBarButton;
-            FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
-            //FeedsObservableCollection[collectionIndex].IsFavarite = FeedsObservableCollection[collectionIndex].IsFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
-            feedViewModel.isFavarite = feedViewModel.isFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
-            feedViewModel.Like = feedViewModel.isFavarite == Visibility.Visible ? feedViewModel.Like + 1 : feedViewModel.Like - 1;
-            bool? sent;
-            if (feedViewModel.isFavarite == Visibility.Visible)
-            {
-                sent = await ApiHelper.PutFavorite(feedViewModel.PostID);
-            }
-            else
-            {
-                sent = await ApiHelper.DeleteFavorite(feedViewModel.PostID);
-            }
-
-            //如果点赞失败了就提示，并还原到点击之前的样子
-            if (sent == null)
-            {
-                NoteTextBlock.Text = "登录失败，无法点赞，请重新登录";
-                NoteGrid.Visibility = Visibility.Visible;
-                NoteFirst.Begin();
+                AppBarButton btn = sender as AppBarButton;
+                FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
+                //FeedsObservableCollection[collectionIndex].IsFavarite = FeedsObservableCollection[collectionIndex].IsFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
                 feedViewModel.isFavarite = feedViewModel.isFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
                 feedViewModel.Like = feedViewModel.isFavarite == Visibility.Visible ? feedViewModel.Like + 1 : feedViewModel.Like - 1;
+                bool? sent;
+                if (feedViewModel.isFavarite == Visibility.Visible)
+                {
+                    sent = await TuchongApi.PutFavorite(feedViewModel.PostID);
+                }
+                else
+                {
+                    sent = await TuchongApi.DeleteFavorite(feedViewModel.PostID);
+                }
+
+                //如果点赞失败了就提示，并还原到点击之前的样子
+                if (sent == null)
+                {
+                    NoteTextBlock.Text = "登录失败，无法点赞，请重新登录";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    feedViewModel.isFavarite = feedViewModel.isFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
+                    feedViewModel.Like = feedViewModel.isFavarite == Visibility.Visible ? feedViewModel.Like + 1 : feedViewModel.Like - 1;
+                }
+                else if (sent == false)
+                {
+                    NoteTextBlock.Text = "点赞失败，请稍后重试~";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    feedViewModel.isFavarite = feedViewModel.isFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
+                    feedViewModel.Like = feedViewModel.isFavarite == Visibility.Visible ? feedViewModel.Like + 1 : feedViewModel.Like - 1;
+                }
             }
-            else if (sent == false)
+            catch (Exception ex)
             {
-                NoteTextBlock.Text = "点赞失败，请稍后重试~";
-                NoteGrid.Visibility = Visibility.Visible;
-                NoteFirst.Begin();
-                feedViewModel.isFavarite = feedViewModel.isFavarite == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
-                feedViewModel.Like = feedViewModel.isFavarite == Visibility.Visible ? feedViewModel.Like + 1 : feedViewModel.Like - 1;
+                DialogShower.ShowDialog("点赞异常", ex.Message);
             }
         }
 
@@ -658,10 +735,14 @@ namespace 图虫
         /// <param name="e"></param>
         private void Button_Click_5(object sender, RoutedEventArgs e)
         {
-            Button btn = sender as Button;
-            FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
-            MsgBus.Instance.PhotographerID = feedViewModel.UserID;
-            InfoFrame.Navigate(typeof(PhotographerPage), false);
+            try
+            {
+                Button btn = sender as Button;
+                FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
+                MsgBus.Instance.PhotographerID = feedViewModel.UserID;
+                InfoFrame.Navigate(typeof(PhotographerPage), false);
+            }
+            catch { }
         }
 
         private void CommentTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -693,6 +774,118 @@ namespace 图虫
                 {
                     InfoFrame.Navigate(typeof(SearchPage), SearchTextBox.Text);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 关注
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Button_Click_7(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (LoginHelper.LoggedIn == false)
+                {
+                    NoteTextBlock.Text = "需要先登录才可以关注哦";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    return;
+                }
+                Button btn = sender as Button;
+                FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
+
+                var resp = await TuchongApi.PutFollow(feedViewModel.UserID.Substring(4));
+                if (resp != null)
+                {
+                    if (resp.result == "SUCCESS")
+                    {
+                        feedViewModel.isFollowing = true;
+                    }
+                    else
+                    {
+                        NoteTextBlock.Text = resp.message;
+                        NoteGrid.Visibility = Visibility.Visible;
+                        NoteFirst.Begin();
+                    }
+                }
+                else
+                {
+                    NoteTextBlock.Text = "关注失败，数据解析错误";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                }
+            }
+            catch (Exception ex)
+            {
+                DialogShower.ShowDialog("关注异常", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 取消关注
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Button_Click_8(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (LoginHelper.LoggedIn == false)
+                {
+                    NoteTextBlock.Text = "需要先登录才可以关注哦";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                    return;
+                }
+                Button btn = sender as Button;
+                FeedViewModel feedViewModel = (FeedViewModel)btn.DataContext;
+
+                var resp = await TuchongApi.DeleteFollow(feedViewModel.UserID.Substring(4));
+                if (resp != null)
+                {
+                    if (resp.result == "SUCCESS")
+                    {
+                        feedViewModel.isFollowing = false;
+                    }
+                    else
+                    {
+                        NoteTextBlock.Text = resp.message;
+                        NoteGrid.Visibility = Visibility.Visible;
+                        NoteFirst.Begin();
+                    }
+                }
+                else
+                {
+                    NoteTextBlock.Text = "取消关注失败，数据解析错误";
+                    NoteGrid.Visibility = Visibility.Visible;
+                    NoteFirst.Begin();
+                }
+            }
+            catch (Exception ex)
+            {
+                DialogShower.ShowDialog("取关异常", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 清理缓存
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Button_Click_9(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ClearingProgressRing.IsActive = true;
+                await CacheManager.ClearCacheAsync();
+                await CacheManager.ClearTempFilesAsync();
+                ClearingProgressRing.IsActive = false;
+            }
+            catch(Exception ex)
+            {
+                DialogShower.ShowDialog("清理缓存异常", ex.Message);
             }
         }
     }

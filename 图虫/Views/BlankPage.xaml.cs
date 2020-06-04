@@ -100,7 +100,7 @@ namespace 图虫
                 }
                 else
                 {
-                    var info = await ApiHelper.GetPhotographerInfo(id);
+                    var info = await TuchongApi.GetPhotographerInfo(id);
                     if (info != null)
                     {
                         ViewModel = new PhotographerViewModel(info);
@@ -181,6 +181,10 @@ namespace 图虫
             try
             {
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByClassName('nav-login login-trigger')[0].click();" });
+            }
+            catch { }
+            try
+            {
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByName('account')[0].value='" + LoginHelper.GetAccount() + "';" });
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByName('password')[0].value='" + LoginHelper.GetPassword() + "';" });
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByClassName('submit-btn')[0].click();" });
@@ -263,6 +267,7 @@ namespace 图虫
             if (LoginHelper.LoggedIn)
             {
                 MsgBus.Instance.PhotographerID = "ID: " + LoginHelper.GetUserID();
+                MsgBus.Instance.ShouldRefreshMyLike = true;
                 this.Frame.Navigate(typeof(MyLikePage), this.ViewModel.Icon, new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
             }
         }
@@ -277,6 +282,7 @@ namespace 图虫
             if (LoginHelper.LoggedIn)
             {
                 MsgBus.Instance.PhotographerID = "ID: " + LoginHelper.GetUserID();
+                MsgBus.Instance.ShouldRefreshMyFollowing = true;
                 this.Frame.Navigate(typeof(MyFollowPage), this.ViewModel.Icon, new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
             }
         }
@@ -291,6 +297,7 @@ namespace 图虫
             if (LoginHelper.LoggedIn)
             {
                 MsgBus.Instance.PhotographerID = "ID: " + LoginHelper.GetUserID();
+                MsgBus.Instance.ShouldRefreshMyFans = true;
                 this.Frame.Navigate(typeof(MyFansPage), this.ViewModel.Icon, new SlideNavigationTransitionInfo() { Effect = SlideNavigationTransitionEffect.FromRight });
             }
         }

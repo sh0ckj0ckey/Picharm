@@ -41,6 +41,10 @@ namespace 图虫
             try
             {
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByClassName('nav-login login-trigger')[0].click();" });
+            }
+            catch { }
+            try
+            {
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByName('account')[0].value='" + LoginHelper.GetAccount() + "';" });
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByName('password')[0].value='" + LoginHelper.GetPassword() + "';" });
                 await LoginWebView.InvokeScriptAsync("eval", new string[] { "document.getElementsByClassName('submit-btn')[0].click();" });

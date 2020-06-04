@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Xaml.Media.Imaging;
+using 图虫.Helpers;
 
 namespace 图虫.ViewModels
 {
@@ -14,6 +16,14 @@ namespace 图虫.ViewModels
         public string CoverImage { get; set; }
         public string PrizeDesc { get; set; }
         public string Url { get; set; }
+        public BitmapImage ImageSource { get; set; }
+
+        public async Task LoadImageAsync()
+        {
+            ImageSource = await ImageLoader.LoadImageAsync(CoverImage);
+            ImageSource.DecodePixelType = DecodePixelType.Logical;
+            ImageSource.DecodePixelHeight = 224;
+        }
 
         public HoteventViewModel(Models.Discover.Hotevent hotevent)
         {
