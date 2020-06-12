@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using 图虫.ViewModels;
@@ -11,6 +12,14 @@ namespace 图虫
 {
     public static class TuchongApi
     {
+
+        private static HttpClient _httpClient = new HttpClient();
+
+        private static void ResetHttpClient()
+        {
+            _httpClient.DefaultRequestHeaders?.Clear();
+        }
+
         /// <summary>
         /// 获取“推荐”内容
         /// </summary>
@@ -21,36 +30,39 @@ namespace 图虫
             try
             {
                 string url = "https://api.tuchong.com/2/feed-app?" + para;
-                using (HttpClient http = new HttpClient())
+                Models.Feeds.Feed feed;
+                try
                 {
-                    Models.Feeds.Feed feed;
+                    ResetHttpClient();
                     try
                     {
-                        try
+                        if (LoginHelper.Token != "")
                         {
-                            http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                            http.DefaultRequestHeaders.Add("platform", "ios");
-                        }
-                        catch { }
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                            _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore,
-                        };
-                        feed = JsonConvert.DeserializeObject<Models.Feeds.Feed>(jsonMessage, jss);
+                            _httpClient.DefaultRequestHeaders.Add("platform", "ios");
+                        }
                     }
-                    catch (Exception e)
+                    catch { }
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return new Models.Feeds.Feed
-                        {
-                            message = "获取或者解析数据失败，可能是服务器问题，请尝试刷新\n " + e.Message
-                        };
-                    }
-                    return feed;
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore,
+                    };
+                    feed = JsonConvert.DeserializeObject<Models.Feeds.Feed>(jsonMessage, jss);
                 }
+                catch (Exception e)
+                {
+                    return new Models.Feeds.Feed
+                    {
+                        message = "获取或者解析数据失败，可能是服务器问题，请尝试刷新\n " + e.Message
+                    };
+                }
+                return feed;
             }
             catch { return null; }
         }
@@ -65,35 +77,35 @@ namespace 图虫
             try
             {
                 string url = "https://tuchong.com/rest/2/posts/" + para;
-                using (HttpClient http = new HttpClient())
+                Models.Comments.Comments comments;
+                try
                 {
-                    Models.Comments.Comments comments;
-                    try
-                    {
-                        // 已经登录的话
-                        if (LoginHelper.UserCookie.Length > 4)
-                        {
-                            http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                        }
+                    ResetHttpClient();
 
-                        // 否则就不加 Cookie 直接获取
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        comments = JsonConvert.DeserializeObject<Models.Comments.Comments>(jsonMessage, jss);
-                    }
-                    catch
+                    // 已经登录的话
+                    if (LoginHelper.UserCookie.Length > 4)
                     {
-                        comments = new Models.Comments.Comments();
-                        return comments;
+                        _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
                     }
+
+                    // 否则就不加 Cookie 直接获取
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    comments = JsonConvert.DeserializeObject<Models.Comments.Comments>(jsonMessage, jss);
+                }
+                catch
+                {
+                    comments = new Models.Comments.Comments();
                     return comments;
                 }
+                return comments;
             }
             catch { return null; }
         }
@@ -107,34 +119,34 @@ namespace 图虫
             try
             {
                 string url = "https://api.tuchong.com/discover-app";
-                using (HttpClient http = new HttpClient())
+                Models.Discover.Discover discover;
+                try
                 {
-                    Models.Discover.Discover discover;
-                    try
-                    {
-                        // 已经登录的话
-                        if (LoginHelper.UserCookie.Length > 4)
-                        {
-                            http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                        }
+                    ResetHttpClient();
 
-                        // 否则就不加 Cookie 直接获取
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        discover = JsonConvert.DeserializeObject<Models.Discover.Discover>(jsonMessage, jss);
-                    }
-                    catch
+                    // 已经登录的话
+                    if (LoginHelper.UserCookie.Length > 4)
                     {
-                        return null;
+                        _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
                     }
-                    return discover;
+
+                    // 否则就不加 Cookie 直接获取
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    discover = JsonConvert.DeserializeObject<Models.Discover.Discover>(jsonMessage, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return discover;
             }
             catch { return null; }
         }
@@ -148,29 +160,29 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/discover/" + para;
-                using (HttpClient http = new HttpClient())
-                {
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    Models.CategoryItem.CategoryItem categoryItem;
-                    try
-                    {
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        categoryItem = JsonConvert.DeserializeObject<Models.CategoryItem.CategoryItem>(jsonMessage, jss);
-                    }
-                    catch
+                string url = "https://api.tuchong.com/discover/" + para;
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                Models.CategoryItem.CategoryItem categoryItem;
+                try
+                {
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
-                    return categoryItem;
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    categoryItem = JsonConvert.DeserializeObject<Models.CategoryItem.CategoryItem>(jsonMessage, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return categoryItem;
             }
             catch { return null; }
         }
@@ -184,44 +196,44 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url = "https://tuchong.com/rest/2/sites/" + id + "/posts?" + para;
-                using (HttpClient http = new HttpClient())
+                try
+                {
+                    if (LoginHelper.UserCookie.Length > 4)
+                    {
+                        _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                    }
+                }
+                catch
                 {
                     try
                     {
-                        if (LoginHelper.UserCookie.Length > 4)
-                        {
-                            http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                        }
+                        _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                        _httpClient.DefaultRequestHeaders.Add("platform", "ios");
                     }
-                    catch
-                    {
-                        try
-                        {
-                            http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                            http.DefaultRequestHeaders.Add("platform", "ios");
-                        }
-                        catch { }
-                    }
-                    Models.Photograph.Photograph photographs;
-                    try
-                    {
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        photographs = JsonConvert.DeserializeObject<Models.Photograph.Photograph>(jsonMessage, jss);
-                    }
-                    catch
-                    {
-                        photographs = null;
-                    }
-                    return photographs;
+                    catch { }
                 }
+                Models.Photograph.Photograph photographs;
+                try
+                {
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    photographs = JsonConvert.DeserializeObject<Models.Photograph.Photograph>(jsonMessage, jss);
+                }
+                catch
+                {
+                    photographs = null;
+                }
+                return photographs;
             }
             catch { return null; }
         }
@@ -233,31 +245,31 @@ namespace 图虫
         /// <returns></returns>
         public static async Task<ObservableCollection<ImageExifViewModel>> GetImageExif(string imgID)
         {
-            using (HttpClient http = new HttpClient())
+            ObservableCollection<ImageExifViewModel> result = new ObservableCollection<ImageExifViewModel>();
+            try
             {
-                ObservableCollection<ImageExifViewModel> result = new ObservableCollection<ImageExifViewModel>();
-                try
-                {
-                    var response = await http.GetAsync(new Uri("https://api.tuchong.com/images/" + imgID + "/exif"));
-                    var jsonMessage = await response.Content.ReadAsStringAsync();
-                    jsonMessage = Unicode2String(jsonMessage).Replace("\\", "");
+                ResetHttpClient();
 
-                    MatchCollection matchCollection = Regex.Matches(jsonMessage, "\\\"desc\\\":\\\"([\\s\\S]*?)\\\",\\\"content\\\":\\\"([\\s\\S]*?)\\\"");
-                    ImageExifViewModel imageExifViewModel = null;
-                    foreach (Match item in matchCollection)
+                var response = await _httpClient.GetAsync(new Uri("https://api.tuchong.com/images/" + imgID + "/exif"));
+                response.EnsureSuccessStatusCode();
+                var jsonMessage = await response.Content.ReadAsStringAsync();
+                jsonMessage = Unicode2String(jsonMessage).Replace("\\", "");
+
+                MatchCollection matchCollection = Regex.Matches(jsonMessage, "\\\"desc\\\":\\\"([\\s\\S]*?)\\\",\\\"content\\\":\\\"([\\s\\S]*?)\\\"");
+                ImageExifViewModel imageExifViewModel = null;
+                foreach (Match item in matchCollection)
+                {
+                    imageExifViewModel = new ImageExifViewModel
                     {
-                        imageExifViewModel = new ImageExifViewModel
-                        {
-                            Desc = item.Groups[1].Value,
-                            Content = item.Groups[2].Value
-                        };
-                        result.Add(imageExifViewModel);
-                    }
+                        Desc = item.Groups[1].Value,
+                        Content = item.Groups[2].Value
+                    };
+                    result.Add(imageExifViewModel);
                 }
-                catch
-                { }
-                return result;
             }
+            catch
+            { }
+            return result;
         }
 
         /// <summary>
@@ -269,34 +281,34 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url = "https://tuchong.com/rest/users/self/favorites/" + para;
-                using (HttpClient http = new HttpClient())
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                try
                 {
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    try
+                    var response = await _httpClient.PutAsync(new Uri(url), new StringContent("", System.Text.Encoding.UTF8, "application/x-www-form-urlencoded"));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+                    if (jsonMessage.Contains("SUCCESS"))
                     {
-                        var response = await http.PutAsync(new Uri(url), new StringContent("", System.Text.Encoding.UTF8, "application/x-www-form-urlencoded"));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-                        if (jsonMessage.Contains("SUCCESS"))
-                        {
-                            // 操作成功
-                            return true;
-                        }
-                        else if (jsonMessage.Contains("\"result\":\"ERROR\",\"code\":1"))
-                        {
-                            // 没有登录
-                            return null;
-                        }
-                        else
-                        {
-                            // 其他原因失败
-                            return false;
-                        }
+                        // 操作成功
+                        return true;
                     }
-                    catch
+                    else if (jsonMessage.Contains("\"result\":\"ERROR\",\"code\":1"))
                     {
+                        // 没有登录
+                        return null;
+                    }
+                    else
+                    {
+                        // 其他原因失败
                         return false;
                     }
+                }
+                catch
+                {
+                    return false;
                 }
             }
             catch { return false; }
@@ -311,34 +323,34 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url = "https://tuchong.com/rest/users/self/favorites/" + para;
-                using (HttpClient http = new HttpClient())
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                try
                 {
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    try
+                    var response = await _httpClient.DeleteAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+                    if (jsonMessage.Contains("SUCCESS"))
                     {
-                        var response = await http.DeleteAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-                        if (jsonMessage.Contains("SUCCESS"))
-                        {
-                            // 操作成功
-                            return true;
-                        }
-                        else if (jsonMessage.Contains("\"result\":\"ERROR\",\"code\":1"))
-                        {
-                            // 没有登录
-                            return null;
-                        }
-                        else
-                        {
-                            // 其他原因失败
-                            return false;
-                        }
+                        // 操作成功
+                        return true;
                     }
-                    catch
+                    else if (jsonMessage.Contains("\"result\":\"ERROR\",\"code\":1"))
                     {
+                        // 没有登录
+                        return null;
+                    }
+                    else
+                    {
+                        // 其他原因失败
                         return false;
                     }
+                }
+                catch
+                {
+                    return false;
                 }
             }
             catch { return false; }
@@ -354,6 +366,8 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url = "https://api.tuchong.com/3/posts/" + postid + "/comments";
                 var nvc = new List<KeyValuePair<string, string>>
                 {
@@ -362,37 +376,35 @@ namespace 图虫
                 };
                 var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(nvc) };
 
-                using (HttpClient http = new HttpClient())
+                _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                _httpClient.DefaultRequestHeaders.Add("platform", "ios");
+                try
                 {
-                    http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    http.DefaultRequestHeaders.Add("platform", "ios");
-                    try
+                    var response = await _httpClient.SendAsync(req);
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+                    Match match = Regex.Match(jsonMessage, "\\\"result\\\":\\\"([\\s\\S]*?)\\\"");
+                    string result = match.Groups[1].Value;
+                    if (result.ToUpper() == "SUCCESS")
                     {
-                        var response = await http.SendAsync(req);
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
-                        Match match = Regex.Match(jsonMessage, "\\\"result\\\":\\\"([\\s\\S]*?)\\\"");
-                        string result = match.Groups[1].Value;
-                        if (result.ToUpper() == "SUCCESS")
-                        {
-                            // 操作成功
-                            return "评论成功";
-                        }
-                        else
-                        {
-                            string msg;
-                            try
-                            {
-                                Match messageMatch = Regex.Match(jsonMessage, "\\\"message\\\":\\\"([\\s\\S]*?)\\\"");
-                                msg = messageMatch.Groups[1].Value;
-                            }
-                            catch { msg = "未知错误"; }
-                            return "评论失败：" + Unicode2String(msg);
-                        }
+                        // 操作成功
+                        return "评论成功";
                     }
-                    catch (Exception e)
+                    else
                     {
-                        return "评论发生异常：" + e.Message;
+                        string msg;
+                        try
+                        {
+                            Match messageMatch = Regex.Match(jsonMessage, "\\\"message\\\":\\\"([\\s\\S]*?)\\\"");
+                            msg = messageMatch.Groups[1].Value;
+                        }
+                        catch { msg = "未知错误"; }
+                        return "评论失败：" + Unicode2String(msg);
                     }
+                }
+                catch (Exception e)
+                {
+                    return "评论发生异常：" + e.Message;
                 }
             }
             catch (Exception e)
@@ -411,27 +423,27 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url_sites = "https://tuchong.com/rest/3/search/sites?query=" + query + para;
-                using (HttpClient http = new HttpClient())
+                Models.SitesSearchResult.SitesSearchResult searchResult_sites = null;
+                try
                 {
-                    Models.SitesSearchResult.SitesSearchResult searchResult_sites = null;
-                    try
+                    var response_sites = await _httpClient.GetAsync(new Uri(url_sites));
+                    response_sites.EnsureSuccessStatusCode();
+                    var jsonMessage_sites = await response_sites.Content.ReadAsStringAsync();
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        var response_sites = await http.GetAsync(new Uri(url_sites));
-                        var jsonMessage_sites = await response_sites.Content.ReadAsStringAsync();
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        searchResult_sites = JsonConvert.DeserializeObject<Models.SitesSearchResult.SitesSearchResult>(jsonMessage_sites, jss);
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                    return searchResult_sites;
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    searchResult_sites = JsonConvert.DeserializeObject<Models.SitesSearchResult.SitesSearchResult>(jsonMessage_sites, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return searchResult_sites;
             }
             catch { return null; }
         }
@@ -446,27 +458,27 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url_tags = "https://tuchong.com/rest/3/search/tags?query=" + query + para;
-                using (HttpClient http = new HttpClient())
+                Models.TagsSearchResult.TagsSearchResult searchResult_tags = null;
+                try
                 {
-                    Models.TagsSearchResult.TagsSearchResult searchResult_tags = null;
-                    try
+                    var response_tags = await _httpClient.GetAsync(new Uri(url_tags));
+                    response_tags.EnsureSuccessStatusCode();
+                    var jsonMessage_tags = await response_tags.Content.ReadAsStringAsync();
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        var response_tags = await http.GetAsync(new Uri(url_tags));
-                        var jsonMessage_tags = await response_tags.Content.ReadAsStringAsync();
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        searchResult_tags = JsonConvert.DeserializeObject<Models.TagsSearchResult.TagsSearchResult>(jsonMessage_tags, jss);
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                    return searchResult_tags;
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    searchResult_tags = JsonConvert.DeserializeObject<Models.TagsSearchResult.TagsSearchResult>(jsonMessage_tags, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return searchResult_tags;
             }
             catch { return null; }
         }
@@ -481,27 +493,27 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url_posts = "https://tuchong.com/rest/3/search/posts?query=" + query + para;
-                using (HttpClient http = new HttpClient())
+                Models.PostsSearchResult.PostsSearchResult searchResult_posts = null;
+                try
                 {
-                    Models.PostsSearchResult.PostsSearchResult searchResult_posts = null;
-                    try
+                    var response_posts = await _httpClient.GetAsync(new Uri(url_posts));
+                    response_posts.EnsureSuccessStatusCode();
+                    var jsonMessage_posts = await response_posts.Content.ReadAsStringAsync();
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        var response_posts = await http.GetAsync(new Uri(url_posts));
-                        var jsonMessage_posts = await response_posts.Content.ReadAsStringAsync();
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        searchResult_posts = JsonConvert.DeserializeObject<Models.PostsSearchResult.PostsSearchResult>(jsonMessage_posts, jss);
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                    return searchResult_posts;
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    searchResult_posts = JsonConvert.DeserializeObject<Models.PostsSearchResult.PostsSearchResult>(jsonMessage_posts, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return searchResult_posts;
             }
             catch { return null; }
         }
@@ -515,33 +527,33 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/2/sites/" + id;
-                using (HttpClient http = new HttpClient())
-                {
-                    Models.Photographer.PhotographerInfo photographerInfo;
-                    try
-                    {
-                        if (LoginHelper.Token.Length > 0)
-                        {
-                            http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                        }
-                        http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        photographerInfo = JsonConvert.DeserializeObject<Models.Photographer.PhotographerInfo>(jsonMessage, jss);
-                    }
-                    catch
+                string url = "https://api.tuchong.com/2/sites/" + id;
+                Models.Photographer.PhotographerInfo photographerInfo;
+                try
+                {
+                    if (LoginHelper.Token.Length > 0)
                     {
-                        return null;
+                        _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
                     }
-                    return photographerInfo;
+                    _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    photographerInfo = JsonConvert.DeserializeObject<Models.Photographer.PhotographerInfo>(jsonMessage, jss);
                 }
+                catch
+                {
+                    return null;
+                }
+                return photographerInfo;
             }
             catch { return null; }
         }
@@ -556,33 +568,33 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/users/" + id + "/following?" + para;
-                using (HttpClient http = new HttpClient())
-                {
-                    if (LoginHelper.Token.Length > 0)
-                    {
-                        http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    }
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    //http.DefaultRequestHeaders.Add("platform", "ios");
-                    Models.MyFollow.MyFollow follow;
-                    try
-                    {
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        follow = JsonConvert.DeserializeObject<Models.MyFollow.MyFollow>(jsonMessage, jss);
-                        return follow;
-                    }
-                    catch
+                string url = "https://api.tuchong.com/users/" + id + "/following?" + para;
+                if (LoginHelper.Token.Length > 0)
+                {
+                    _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                }
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                //http.DefaultRequestHeaders.Add("platform", "ios");
+                Models.MyFollow.MyFollow follow;
+                try
+                {
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    follow = JsonConvert.DeserializeObject<Models.MyFollow.MyFollow>(jsonMessage, jss);
+                    return follow;
+                }
+                catch
+                {
+                    return null;
                 }
             }
             catch { return null; }
@@ -598,33 +610,33 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/sites/" + id + "/followers?" + para;
-                using (HttpClient http = new HttpClient())
-                {
-                    if (LoginHelper.Token.Length > 0)
-                    {
-                        http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    }
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    //http.DefaultRequestHeaders.Add("platform", "ios");
-                    Models.MyFans.MyFans follow;
-                    try
-                    {
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        follow = JsonConvert.DeserializeObject<Models.MyFans.MyFans>(jsonMessage, jss);
-                        return follow;
-                    }
-                    catch
+                string url = "https://api.tuchong.com/sites/" + id + "/followers?" + para;
+                if (LoginHelper.Token.Length > 0)
+                {
+                    _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                }
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                //http.DefaultRequestHeaders.Add("platform", "ios");
+                Models.MyFans.MyFans follow;
+                try
+                {
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    follow = JsonConvert.DeserializeObject<Models.MyFans.MyFans>(jsonMessage, jss);
+                    return follow;
+                }
+                catch
+                {
+                    return null;
                 }
             }
             catch { return null; }
@@ -640,33 +652,33 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/sites/" + id + "/favorites?" + para;
-                using (HttpClient http = new HttpClient())
-                {
-                    if (LoginHelper.Token.Length > 0)
-                    {
-                        http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    }
-                    http.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
-                    //http.DefaultRequestHeaders.Add("platform", "ios");
-                    Models.MyLike.MyLike like;
-                    try
-                    {
-                        var response = await http.GetAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        like = JsonConvert.DeserializeObject<Models.MyLike.MyLike>(jsonMessage, jss);
-                        return like;
-                    }
-                    catch
+                string url = "https://api.tuchong.com/sites/" + id + "/favorites?" + para;
+                if (LoginHelper.Token.Length > 0)
+                {
+                    _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                }
+                _httpClient.DefaultRequestHeaders.Add("Cookie", LoginHelper.UserCookie);
+                //http.DefaultRequestHeaders.Add("platform", "ios");
+                Models.MyLike.MyLike like;
+                try
+                {
+                    var response = await _httpClient.GetAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    like = JsonConvert.DeserializeObject<Models.MyLike.MyLike>(jsonMessage, jss);
+                    return like;
+                }
+                catch
+                {
+                    return null;
                 }
             }
             catch { return null; }
@@ -681,6 +693,8 @@ namespace 图虫
         {
             try
             {
+                ResetHttpClient();
+
                 string url = "https://api.tuchong.com/users/self/following/" + id;
 
                 var nvc = new List<KeyValuePair<string, string>>
@@ -690,27 +704,25 @@ namespace 图虫
                 };
                 var req = new HttpRequestMessage(HttpMethod.Put, url) { Content = new FormUrlEncodedContent(nvc) };
 
-                using (HttpClient http = new HttpClient())
+                _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                _httpClient.DefaultRequestHeaders.Add("platform", "ios");
+                try
                 {
-                    http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    http.DefaultRequestHeaders.Add("platform", "ios");
-                    try
-                    {
-                        var response = await http.SendAsync(req);
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                    var response = await _httpClient.SendAsync(req);
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        PutFollowResp resp = JsonConvert.DeserializeObject<PutFollowResp>(jsonMessage, jss);
-                        return resp;
-                    }
-                    catch
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    PutFollowResp resp = JsonConvert.DeserializeObject<PutFollowResp>(jsonMessage, jss);
+                    return resp;
+                }
+                catch
+                {
+                    return null;
                 }
             }
             catch { return null; }
@@ -725,28 +737,28 @@ namespace 图虫
         {
             try
             {
-                string url = "https://api.tuchong.com/users/self/following/" + id + "?position=page_user_attention&referer=page_me";
-                using (HttpClient http = new HttpClient())
-                {
-                    http.DefaultRequestHeaders.Add("token", LoginHelper.Token);
-                    http.DefaultRequestHeaders.Add("platform", "ios");
-                    try
-                    {
-                        var response = await http.DeleteAsync(new Uri(url));
-                        var jsonMessage = await response.Content.ReadAsStringAsync();
+                ResetHttpClient();
 
-                        JsonSerializerSettings jss = new JsonSerializerSettings
-                        {
-                            NullValueHandling = NullValueHandling.Ignore,
-                            MissingMemberHandling = MissingMemberHandling.Ignore
-                        };
-                        DeleteFollowResp resp = JsonConvert.DeserializeObject<DeleteFollowResp>(jsonMessage, jss);
-                        return resp;
-                    }
-                    catch
+                string url = "https://api.tuchong.com/users/self/following/" + id + "?position=page_user_attention&referer=page_me";
+                _httpClient.DefaultRequestHeaders.Add("token", LoginHelper.Token);
+                _httpClient.DefaultRequestHeaders.Add("platform", "ios");
+                try
+                {
+                    var response = await _httpClient.DeleteAsync(new Uri(url));
+                    response.EnsureSuccessStatusCode();
+                    var jsonMessage = await response.Content.ReadAsStringAsync();
+
+                    JsonSerializerSettings jss = new JsonSerializerSettings
                     {
-                        return null;
-                    }
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    };
+                    DeleteFollowResp resp = JsonConvert.DeserializeObject<DeleteFollowResp>(jsonMessage, jss);
+                    return resp;
+                }
+                catch
+                {
+                    return null;
                 }
             }
             catch { return null; }

@@ -13,6 +13,7 @@ namespace 图虫.Helpers
 {
     public static class ImageLoader
     {
+        private static HttpClient http = new HttpClient();
 
         public static async Task<BitmapImage> LoadImageAsync(string Uri)
         {
@@ -83,16 +84,13 @@ namespace 图虫.Helpers
 
         private static async Task<HttpResponseMessage> GetImage(string url)
         {
-            using (HttpClient http = new HttpClient())
+            try
             {
-                try
-                {
-                    var response = await http.GetAsync(new Uri(url));
-                    response.EnsureSuccessStatusCode();
-                    return response;
-                }
-                catch { return null; }
+                var response = await http.GetAsync(new Uri(url));
+                response.EnsureSuccessStatusCode();
+                return response;
             }
+            catch { return null; }
         }
     }
 }

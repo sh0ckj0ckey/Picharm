@@ -183,7 +183,12 @@ namespace 图虫
             HasMoreItems = true;
             Loading = Visibility.Visible;
             isLoading = true;
-            this.ClearItems();
+            this.Clear();
+            try
+            {
+                GC.Collect();
+            }
+            catch { }
         }
 
         /// <summary>
