@@ -47,11 +47,11 @@ namespace 图虫.Helpers
                 if (cachedFile == null)
                 {
                     //没有对应的缓存文件
-                    var img = await GetImage(Uri);
-                    if (img == null)
-                    {
-                        return null;
-                    }
+                    //var img = await GetImage(Uri);
+                    //if (img == null)
+                    //{
+                    //   return null;
+                    //}
                     using (var resStream = await (await GetImage(Uri)).Content.ReadAsStreamAsync())
                     {
                         var memStream = new MemoryStream();
