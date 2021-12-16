@@ -6,7 +6,7 @@
 
 ------------------------------------------
 
-这是一个第三方的应用程序，今后将慢慢改进，添砖加瓦，如果有然后建议或者侵犯了您的权益，烦请联系开发人员 yaoyiming123@live.com
+这是一个第三方的应用程序，今后将慢慢改进，添砖加瓦，如果有任何建议或者侵犯了您的权益，烦请联系开发人员 yaoyiming123@live.com
 
 现在就去 [Microsoft Store](https://www.microsoft.com/store/apps/9PLTN6HJWWKL) 下载体验
 
