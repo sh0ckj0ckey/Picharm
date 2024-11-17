@@ -1,0 +1,140 @@
+﻿<Page
+    x:Class="Picharm.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Picharm"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls" 
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals" 
+    xmlns:models="using:Picharm.Models"
+    xmlns:converters="using:CommunityToolkit.WinUI.Converters"
+    muxc:BackdropMaterial.ApplyToRootOrPageBackground="True"
+    mc:Ignorable="d" Loaded="MainPage_Loaded" Background="Transparent">
+
+    <Page.Resources>
+        <!--自定义TitleBar的高度-->
+        <!--<Thickness x:Key="NavigationViewContentMargin">0,0,0,0</Thickness>-->
+
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <models:MenuItemTemplateSelector x:Key="menuTemplateSelector">
+            <models:MenuItemTemplateSelector.ItemTemplate>
+                <DataTemplate x:DataType="models:MainNavigationItem">
+                    <muxc:NavigationViewItem Content="{x:Bind Name}" Tag="{x:Bind Tag}" IsExpanded="True" SelectsOnInvoked="{x:Bind IsLeaf}" ToolTipService.ToolTip="{x:Bind Name}"
+                                             MenuItemsSource="{x:Bind Children,Mode=OneWay}" FocusVisualPrimaryThickness="0" FocusVisualSecondaryThickness="0">
+                        <muxc:NavigationViewItem.Icon>
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="{x:Bind Icon}"/>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                </DataTemplate>
+            </models:MenuItemTemplateSelector.ItemTemplate>
+            <models:MenuItemTemplateSelector.HeaderTemplate>
+                <DataTemplate x:DataType="models:MainNavigationHeader">
+                    <muxc:NavigationViewItemHeader Content="{x:Bind Name}"/>
+                </DataTemplate>
+            </models:MenuItemTemplateSelector.HeaderTemplate>
+            <models:MenuItemTemplateSelector.UserItemTemplate>
+                <DataTemplate x:DataType="models:MainNavigationUserItem">
+                    <muxc:NavigationViewItem Tag="{x:Bind Tag}" FocusVisualPrimaryThickness="0" FocusVisualSecondaryThickness="0">
+                        <muxc:NavigationViewItem.Content>
+                            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Margin="1,0,0,0" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE77B;" FontSize="14"/>
+                                <TextBlock Grid.Column="1" Margin="16,0,0,0" Text="未登录"/>
+                            </Grid>
+                        </muxc:NavigationViewItem.Content>
+                    </muxc:NavigationViewItem>
+                </DataTemplate>
+            </models:MenuItemTemplateSelector.UserItemTemplate>
+            <models:MenuItemTemplateSelector.SettingItemTemplate>
+                <DataTemplate x:DataType="models:MainNavigationSettingItem">
+                    <muxc:NavigationViewItem Content="设置" Tag="{x:Bind Tag}" FocusVisualPrimaryThickness="0" FocusVisualSecondaryThickness="0">
+                        <muxc:NavigationViewItem.Icon>
+                            <muxc:AnimatedIcon>
+                                <muxc:AnimatedIcon.Source>
+                                    <animatedvisuals:AnimatedSettingsVisualSource/>
+                                </muxc:AnimatedIcon.Source>
+                                <muxc:AnimatedIcon.FallbackIconSource>
+                                    <muxc:FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE713;"/>
+                                </muxc:AnimatedIcon.FallbackIconSource>
+                            </muxc:AnimatedIcon>
+                        </muxc:NavigationViewItem.Icon>
+                    </muxc:NavigationViewItem>
+                </DataTemplate>
+            </models:MenuItemTemplateSelector.SettingItemTemplate>
+            <models:MenuItemTemplateSelector.SeparatorTemplate>
+                <DataTemplate x:DataType="models:MainNavigationSeparator">
+                    <muxc:NavigationViewItemSeparator/>
+                </DataTemplate>
+            </models:MenuItemTemplateSelector.SeparatorTemplate>
+        </models:MenuItemTemplateSelector>
+
+    </Page.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!--导航页面-->
+        <muxc:NavigationView x:Name="MainNavigationView" Grid.Row="1" Background="Transparent" OpenPaneLength="248" Canvas.ZIndex="0" PaneDisplayMode="Auto" ExpandedModeThresholdWidth="920"
+                             IsPaneToggleButtonVisible="False" IsBackButtonVisible="Collapsed" IsSettingsVisible="False" IsTitleBarAutoPaddingEnabled="False" IsTabStop="False"
+                             Loaded="MainNavigationView_Loaded" ItemInvoked="MainNavigationView_ItemInvoked"
+                             MenuItemTemplateSelector="{StaticResource menuTemplateSelector}" 
+                             MenuItemsSource="{x:Bind _viewModel.MainNavigationItems,Mode=OneWay}"
+                             FooterMenuItemsSource="{x:Bind _viewModel.MainNavigationFooterItems,Mode=OneWay}">
+            <muxc:NavigationView.AutoSuggestBox>
+                <AutoSuggestBox QueryIcon="Find" PlaceholderText="作品、圈子、摄影师"/>
+            </muxc:NavigationView.AutoSuggestBox>
+
+            <Frame x:Name="MainFrame" Padding="0,0,0,0">
+                <Frame.ContentTransitions>
+                    <TransitionCollection>
+                        <NavigationThemeTransition/>
+                    </TransitionCollection>
+                </Frame.ContentTransitions>
+            </Frame>
+        </muxc:NavigationView>
+        <!--标题栏-->
+        <Grid x:Name="AppTitleBarGrid" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="1"/>
+        <Grid x:Name="TitleBarFeatureGrid" Height="48" Margin="0,0,180,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Canvas.ZIndex="1" IsHitTestVisible="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <!--菜单按钮-->
+            <Button Grid.Column="0" Height="36" Width="38" Margin="8,0,0,0" Background="Transparent" BorderBrush="Transparent" Padding="0" ToolTipService.ToolTip="导航栏"
+                    FocusVisualPrimaryThickness="0" FocusVisualPrimaryBrush="Transparent" FocusVisualSecondaryThickness="0" FocusVisualSecondaryBrush="Transparent"
+                    Click="OnClickMenu">
+                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{ThemeResource APPLICATION_FR}" FontSize="14" Glyph="&#xE700;" Opacity="0.7"/>
+            </Button>
+            <!--返回按钮-->
+            <Button Grid.Column="1" Height="36" Width="38" Margin="2,0,0,0" Background="Transparent" BorderBrush="Transparent" Padding="0" ToolTipService.ToolTip="返回"
+                    FocusVisualPrimaryThickness="0" FocusVisualPrimaryBrush="Transparent" FocusVisualSecondaryThickness="0" FocusVisualSecondaryBrush="Transparent"
+                    Click="OnClickBack" Visibility="{x:Bind MainFrame.CanGoBack,Mode=OneWay,Converter={StaticResource BoolToVisibilityConverter}}">
+                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{ThemeResource APPLICATION_FR}" FontSize="14" Glyph="&#xE112;" Opacity="0.7"/>
+            </Button>
+            <!--刷新按钮-->
+            <Button Grid.Column="2" Height="36" Width="38" Margin="2,0,16,0" Background="Transparent" BorderBrush="Transparent" Padding="0" ToolTipService.ToolTip="刷新"
+                    FocusVisualPrimaryThickness="0" FocusVisualPrimaryBrush="Transparent" FocusVisualSecondaryThickness="0" FocusVisualSecondaryBrush="Transparent"
+                    Click="OnClickRefresh">
+                <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Foreground="{ThemeResource APPLICATION_FR}" FontSize="14" Glyph="&#xE149;" Opacity="0.7"/>
+            </Button>
+            <!--标题Logo-->
+            <StackPanel x:Name="AppTitleLogo" Grid.Column="3" Opacity="1" Spacing="4" Orientation="Horizontal" VerticalAlignment="Center" IsHitTestVisible="False">
+                <Image HorizontalAlignment="Left" VerticalAlignment="Center" Width="24" Height="24" Margin="0,0,0,-2">
+                    <Image.Source>
+                        <BitmapImage UriSource="Assets/Picharm.png" DecodePixelHeight="48"/>
+                    </Image.Source>
+                </Image>
+                <TextBlock Text="图蝶" FontWeight="Bold" FontSize="16" CharacterSpacing="64" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

@@ -1,0 +1,18 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Picharm" 
+    xmlns:control="using:Picharm.Controls">
+
+    <Style TargetType="control:CommentRichTextBlock">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="control:CommentRichTextBlock">
+                    <RichTextBlock x:Name="RichTextBlock" IsTextSelectionEnabled="False" LineHeight="20" TextTrimming="None" TextWrapping="Wrap"
+                                   FontSize="{TemplateBinding FontSize}"
+                                   Foreground="{TemplateBinding Foreground}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
